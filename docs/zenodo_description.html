@@ -12,6 +12,8 @@
 <ul>
 <li><strong>T2_ANA_ATLASAGUAS_DB_BRAZIL_2021.zip</strong>: the database, <em>ANA_ATLASAGUAS_DB_BRAZIL_2021.gpkg</em>. This is the file most users need.</li>
 <li><strong>T1_ANA_ATLASAGUAS_DB_BRAZIL_2021.zip</strong>: the standardized source files the database is built from, one file per Atlas layer (CSV or GeoPackage) with a glossary CSV each (column, Portuguese and English description, unit), plus the layer catalog <em>ANA_ATLAS-AGUAS_LAYERS_X_X.csv</em>. Provided for reproducibility.</li>
+<li><strong>ANA_ATLASAGUAS_SYNTHESIS_MUNICIPIOS_BRAZIL_2021.csv</strong>: a flat table derived from the database, one row per municipality (5,572), for use without GIS software. It brings together the municipality attributes, the 2020 and 2035 indicators, the supply shares (surface and groundwater) and covered population, the provisioning area attributes, the investments and the number of proposals. Semicolon-separated, UTF-8; text values in double quotes; an empty cell means no value.</li>
+<li><strong>ANA_ATLASAGUAS_SYNTHESIS_MUNICIPIOS_BRAZIL_2021_GLOSSARY.csv</strong>: description of every column of the synthesis table, in Portuguese and English, with units.</li>
 </ul>
 
 <p><strong>Getting Started</strong></p>
@@ -31,6 +33,6 @@
 <p>&nbsp;</p>
 
 <p><strong>Version Log</strong></p>
-<p>1.1.0 - T1 source files added (T1 zip); database renamed to the T2 zip; <em>n_parts</em> added to <em>catchments_attributes</em>.</p>
+<p>1.1.0 - T1 source files added (T1 zip); database renamed to the T2 zip; <em>n_parts</em> added to <em>catchments_attributes</em>; municipality synthesis table and its glossary added.</p>
 <p>1.0.0 - Database upload</p>
 <p>0.0.0 - Deposit creation and description.</p>

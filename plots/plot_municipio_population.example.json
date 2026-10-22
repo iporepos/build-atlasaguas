@@ -1,0 +1,107 @@
+{
+ "gpkg": "/path/to/folder/ANA_ATLASAGUAS_DB_BRAZIL_2021.gpkg",
+ "sql": "../queries/municipio_population_provisioning.sql",
+ "output": "/path/to/folder/municipio_population_dispersion.jpg",
+ "x": "population_urban_2020",
+ "y": "provisioning_area_km2",
+ "category": "regiao_name",
+ "category_order": [
+  "Norte",
+  "Nordeste",
+  "Sudeste",
+  "Sul",
+  "Centro-Oeste"
+ ],
+ "colors": [
+  "#2a78d6",
+  "#eb6834",
+  "#1baf7a",
+  "#eda100",
+  "#e87ba4"
+ ],
+ "legend_loc": "upper left",
+ "x_label": "Urban population, 2020 (inhabitants)",
+ "y_label": "Provisioning area (km²)",
+ "title": "Provisioning area vs urban population, by municipality",
+ "subtitle": "One dot per municipality with a provisioning area ({n}). Population = all urban inhabitants (any source, covered or not). {dropped} left out: urban population not reported.",
+ "ratio_column": "population_urban_per_km2",
+ "label_column": "municipio_label",
+ "hover": [
+  [
+   "regiao_name",
+   "region",
+   "{}"
+  ],
+  [
+   "population_urban_2020",
+   "urban population 2020",
+   "{:,.0f}"
+  ],
+  [
+   "provisioning_area_km2",
+   "provisioning area (km²)",
+   "{:,.1f}"
+  ],
+  [
+   "population_urban_per_km2",
+   "density (/km²)",
+   "{:,.2f}"
+  ],
+  [
+   "surface_percent",
+   "surface share (%)",
+   "{:.1f}"
+  ],
+  [
+   "supply_coverage_2020",
+   "supply coverage (%)",
+   "{:.1f}"
+  ],
+  [
+   "n_intakes_surface",
+   "surface intakes",
+   "{:.0f}"
+  ],
+  [
+   "n_parts",
+   "parts",
+   "{:.0f}"
+  ],
+  [
+   "topology",
+   "topology",
+   "{}"
+  ]
+ ],
+ "log_x": true,
+ "log_y": true,
+ "label_top": 3,
+ "dpi": 200,
+ "size_inches": [
+  6.5,
+  6.5
+ ],
+ "jpeg_quality": 92,
+ "panel_color": "#e4e3df",
+ "marker_size": 12,
+ "marker_edge": 0.3,
+ "alpha": 0.6,
+ "equal_axes": true,
+ "identity_line": [
+  {
+   "label": "1 km² per inhabitant"
+  },
+  {
+   "label": "1 ha per inhabitant",
+   "factor": 0.01
+  },
+  {
+   "label": "100 m² per inhabitant",
+   "factor": 0.0001
+  },
+  {
+   "label": "1 m² per inhabitant",
+   "factor": 1e-06
+  }
+ ]
+}

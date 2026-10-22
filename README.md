@@ -113,6 +113,18 @@ This writes `T1_ANA_ATLASAGUAS_DB_BRAZIL_2021.zip` and `T2_ANA_ATLASAGUAS_DB_BRA
 Backups, old zips and the files in `skip` are left out. Close QGIS first: an open GeoPackage stops the run.
 Upload both zips as a new version of the Zenodo record, with the description in `docs/zenodo_description.html`.
 
+## Municipality synthesis table
+
+`synthesis_municipios.py` writes one CSV row per municipality (5,572) with every per-municipality value in T2:
+attributes, indicators (2020 and 2035), supply shares and covered population, provisioning area attributes,
+investments and proposal counts. A glossary CSV (pt/en, units) is written next to it.
+
+```
+python synthesis_municipios.py --config synthesis_municipios.local.json
+```
+
+Run it after each T2 build. It only reads T2.
+
 ## Plots
 
 `plots/plot_system_dispersion.py` draws scatter plots from the T2 GeoPackage. It uses the SQL queries in `queries/`.

@@ -82,3 +82,59 @@ History before this repo: `Bench/MEMORY.md`, entries 2026-10-05, 2026-10-21 and 
   pyogrio 0.13.0 (GDAL 3.12.4), shapely 2.2.0, pyproj 3.8.0, matplotlib 3.11.2.
 - Hashes stored with Bench (shapely 2.1.2) verified identical with shapely 2.2.0 (scratch copy, all 4,063); scratch
   build OK with .venv. Use `.venv/bin/python` from now on.
+
+## 2026-10-22 — synthesis_municipios.py
+- One CSV row per municipality (5,572) from T2 (read-only) + <stem>_GLOSSARY.csv (T1 convention; copied columns take
+  the T2 `fields` descriptions). 53 columns: municipios_attributes (area_km2 -> municipio_area_km2); indicators wide
+  <col>_<year> (ISH only 2020; empty columns dropped); n_systems, n_systems_integrado, surface/groundwater_percent,
+  covered_population_urban_2020, covered_surface_population_2020; provisioning_areas_attributes (provisioning_area_km2,
+  provisioning_n_parts); 14 investment columns + total; n_proposals (+ per kind; counts only, proposal money is
+  per proposal and would double count).
+- Facts: surface+groundwater shares sum 99.96-100.03 (Atlas rounding, 345 munis). Totals on scratch T2: urban pop 2020
+  185.16 M, covered 169.51 M, investments 107.04 bi BRL. assigned population (view) == urban population, not included.
+- Output default T2/REPORT (local config). Not zipped by publish.py unless moved to T2/ASSETS: user to decide.
+- Tested on the scratch T2 (no revisions); Porto Alegre and São Gonçalo checked by hand.
+- CSV quoting (user): text values and header always in double quotes, numbers bare, NULL = empty unquoted cell
+  (own writer `write_csv`; pandas QUOTE_NONNUMERIC/QUOTE_STRINGS would also quote empty numeric cells). Same for the
+  glossary. Values identical to the previous output.
+
+## 2026-10-22 — municipio plot: area on y
+- plot_municipio_provisioning.{example,local}.json: x = covered_surface_population_2020, y = provisioning_area_km2
+  (labels swapped, title "Provisioning area vs covered surface-water population"), legend upper left (lower left now
+  has dots). Identity line still reads "1 km² per inhabitant" (y/x = km²/inhabitant). Script unchanged except docstring.
+- Tested: rendered from the real T2 (read-only) to the scratchpad. User to re-run to update T2/REPORT.
+
+## 2026-10-22 — municipio plot: urban population vs area
+- New configs plots/plot_municipio_population.{example,local}.json (same SQL and script): x = population_urban_2020
+  (all urban inhabitants, any source), y = provisioning_area_km2, output municipio_population_dispersion.jpg.
+- SQL municipio_population_provisioning.sql gained population_urban_per_km2 (query column only, used as ratio_column
+  for labels and hover; not a dataset column).
+- Tested on the real T2 (read-only): 3,379 points, 0 dropped. User to run it to write to T2/REPORT.
+- Added a second dashed line, 1 ha per inhabitant (y = 0.01 x). Script: `identity_line` now takes an optional
+  `factor` (y = factor * x) and may be a list of lines; the single-object form renders the same as before (the
+  provisioning plot was checked pixel-identical).
+
+## 2026-10-22 — municipio plot: RS highlight
+- New configs plots/plot_municipio_population_rs.{example,local}.json (population vs area, both reference lines):
+  RS municipalities navy #1c2f6e (alpha 0.9) drawn on top of the other states in opaque light gray #aeada8 (alpha 1;
+  first try was dark gray #5f5e5a at alpha 0.45, user asked lighter and not transparent);
+  output municipio_population_dispersion_RS.jpg.
+- Script: new optional `highlight` key {column, value, label, other_label, alpha} replacing `category`; direct labels
+  name highlighted rows only, and only highlighted dots block label placement (gray dots would push leaders far away).
+- SQL gained m.unidade_alias (query column only). Other two plots re-rendered pixel-identical. RS: 187 municipalities.
+
+## 2026-10-22 — 1 m² per inhabitant line
+- Added {"label": "1 m² per inhabitant", "factor": 1e-6} to identity_line in the three municipio configs
+  (provisioning, population, population_rs; example + local). Lines now: 1 km² (provisioning: only km² + m²;
+  population plots: km², ha, m²). System dispersion plot (area on x, no reference lines) left as is.
+- Added "10 m² per inhabitant" (factor 1e-5) to the same three configs; identity_line lists sorted by factor, largest first.
+- Then replaced the 10 m² line with "100 m² per inhabitant" (factor 1e-4) in the same three configs.
+- RS dots 20% bigger: new highlight key `scale` (diameter factor; s = marker_size x scale², s is an area), 1.2 in the
+  RS configs (s 12 -> 17.3). Population plot re-rendered pixel-identical.
+- RS plot labels without "(RS)": SQL gained m.municipio_name (query column only); RS configs use label_column
+  municipio_name. National plots keep municipio_label "Name (UF)".
+- Without "(RS)", Osório and Itaara labels touched ("OsórioItaara"). New script key `label_gap` (points of extra
+  horizontal clearance per name label, default 0), 4 in the RS configs. Applied globally it made the national
+  plots' labels worse, so it stays opt-in; national plots unchanged (pixel check).
+- y_label of the three municipio plots shortened to "Provisioning area (km²)" (user: no explanations).
+- Reference lines now solid, color REF #aaa9a4 (was dashed MUTED #8a8984).

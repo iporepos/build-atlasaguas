@@ -1,0 +1,5 @@
+{
+ "gpkg": "/path/to/T2/ASSETS/ANA_ATLASAGUAS_DB_BRAZIL_2021.gpkg",
+ "output": "/path/to/T2/REPORT/ANA_ATLASAGUAS_SYNTHESIS_MUNICIPIOS_BRAZIL_2021.csv",
+ "sep": ";"
+}

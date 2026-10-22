@@ -4,11 +4,14 @@
 --   (groundwater rows excluded; the shares of a municipality sum to 100).
 -- Covered surface population = urban population 2020 x surface share / 100 x supply coverage 2020 / 100
 --   (NULL where coverage is not reported; 0 where the Atlas gives no surface share although surface intakes are linked).
+-- Urban population density: population_urban_per_km2 = urban population 2020 / provisioning area (for the population plot).
 -- Region: first digit of the IBGE municipality code (1 Norte, 2 Nordeste, 3 Sudeste, 4 Sul, 5 Centro-Oeste).
 -- Area: provisioning_areas_attributes.area_km2 (dissolve of the catchments; areas of municipalities sharing intakes overlap).
 SELECT
     m.municipio_name || ' (' || m.unidade_alias || ')'                                      AS municipio_label,
     a.municipio_code,
+    m.municipio_name,
+    m.unidade_alias,
     CASE substr(a.municipio_code, 1, 1)
         WHEN '1' THEN 'Norte' WHEN '2' THEN 'Nordeste' WHEN '3' THEN 'Sudeste' WHEN '4' THEN 'Sul' WHEN '5' THEN 'Centro-Oeste'
     END                                                                                     AS regiao_name,
@@ -17,6 +20,7 @@ SELECT
     p.population_urban * sh.surface_percent / 100.0 * p.supply_coverage / 100.0 / a.area_km2 AS covered_surface_population_per_km2,
     sh.surface_percent,
     p.population_urban                                                                      AS population_urban_2020,
+    p.population_urban / a.area_km2                                                         AS population_urban_per_km2,
     p.supply_coverage                                                                       AS supply_coverage_2020,
     a.n_intakes_surface,
     a.n_parts,

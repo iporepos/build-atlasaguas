@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Scatter of covered population (y) vs area (x): one dot per row of the SQL (supply system, or municipality with the
+"""Scatter of two columns of the SQL result, e.g. covered population vs area: one dot per row (supply system, or municipality with the
 provisioning-area config plot_municipio_provisioning.local.json).
 
 Usage (project venv):  .venv/bin/python plots/plot_system_dispersion.py --config plots/plot_system_dispersion.local.json [--show] [--output file.jpg]
@@ -12,7 +12,15 @@ Config keys: gpkg, sql (relative to the config file), output, x, y, category, ca
   Optional: subtitle (may use {n} plotted and {dropped}), ratio_column (third measure for labels, default
   covered_population_per_km2), hover (list of [column, text, format], e.g. ["n_parts", "parts", "{:.0f}"]),
   marker_size (default 44), marker_edge (default 1.2), alpha (default 0.95), colors (categorical hex list in category_order,
-  default 3 slots), legend_loc (default lower right).
+  default 3 slots), legend_loc (default lower right), label_gap (points of extra space left/right of each name label,
+  default 0; e.g. 4 when short names would touch),
+  equal_axes (true: same limits on x and y, whole decades covering both, aspect 1:1 -> square plotting area; log axes),
+  identity_line ({"label": "...", "factor": f}: solid light-gray y = f * x line (f default 1), labelled along the line; e.g. 1 km2
+  per inhabitant; a list of such objects draws several lines, e.g. factor 0.01 for 1 ha per inhabitant),
+  highlight ({"column": c, "value": v, "label": "...", "other_label": "...", "alpha": a, "scale": k}: replaces category
+  with two groups, other rows first in colors[0], rows where c == v on top in colors[1] (alpha a, default the config
+  alpha; dot diameter x k, default 1);
+  direct labels name highlighted rows only).
 Rows with a missing or non-positive x/y are dropped on log axes (counted in the log).
 """
 import argparse
@@ -30,6 +38,7 @@ import pandas as pd
 REQUIRED = ["gpkg", "sql", "x", "y"]
 # reference palette, light surface; categorical slots in fixed order (blue, orange)
 SURFACE, INK, INK2, MUTED, GRID = "#fcfcfb", "#0b0b0b", "#52514e", "#8a8984", "#d8d7d2"
+REF = "#aaa9a4"  # reference lines (y = f * x), a step lighter than MUTED
 PANEL = "#e4e3df"  # dim gray plotting area (config panel_color overrides); gridlines are drawn in the surface color
 SERIES = ["#2a78d6", "#eb6834", "#1baf7a"]
 
@@ -79,6 +88,9 @@ def draw(df, cfg, interactive):
     from matplotlib.ticker import FuncFormatter
 
     x, y, cat = cfg["x"], cfg["y"], cfg.get("category")
+    hl = cfg.get("highlight")
+    if hl:
+        cat = hl["column"]
     for c in (x, y) + ((cat,) if cat else ()):
         if c not in df.columns:
             sys.exit(f"column {c} not in the query result")
@@ -91,6 +103,11 @@ def draw(df, cfg, interactive):
     log(f"plotting {int(ok.sum())} points ({int((~ok).sum())} dropped: missing or non-positive values)")
     d = d[ok].reset_index(drop=True)
     ratio = cfg.get("ratio_column", "covered_population_per_km2")
+    if hl:
+        on, other = hl.get("label", str(hl["value"])), hl.get("other_label", "Others")
+        cat = "_highlight"
+        d[cat] = np.where(d[hl["column"]] == hl["value"], on, other)
+        cfg = {**cfg, "category_order": [other, on]}
 
     plt.rcParams.update({"font.family": "DejaVu Sans", "text.color": INK, "axes.labelcolor": INK2, "xtick.color": INK2, "ytick.color": INK2})
     fig, ax = plt.subplots(figsize=cfg.get("size_inches", [10, 6.5]), facecolor=SURFACE)
@@ -105,8 +122,10 @@ def draw(df, cfg, interactive):
     cols, collections, index_of = {}, [], []
     for i, g in enumerate(groups or [None]):
         sub = d if g is None else d[d[cat] == g]
-        sc = ax.scatter(sub[x], sub[y], s=float(cfg.get("marker_size", 44)), color=colors[i], edgecolors=panel,
-                        linewidths=float(cfg.get("marker_edge", 1.2)), alpha=float(cfg.get("alpha", 0.95)),
+        size = float(cfg.get("marker_size", 44)) * (float(hl.get("scale", 1)) ** 2 if hl and i == 1 else 1)  # s is an area
+        sc = ax.scatter(sub[x], sub[y], s=size, color=colors[i], edgecolors=panel,
+                        linewidths=float(cfg.get("marker_edge", 1.2)),
+                        alpha=float(hl.get("alpha", cfg.get("alpha", 0.95)) if hl and i == 1 else cfg.get("alpha", 0.95)),
                         label=(f"{g} (n={len(sub)})" if g is not None else None), zorder=3)
         collections.append(sc)
         index_of.append(sub.index.to_numpy())
@@ -116,6 +135,23 @@ def draw(df, cfg, interactive):
         ax.set_yscale("log")
     for axis in (ax.xaxis, ax.yaxis):
         axis.set_major_formatter(FuncFormatter(fmt_num))
+    if cfg.get("equal_axes"):
+        if not (cfg.get("log_x", True) and cfg.get("log_y", True)):
+            sys.exit("equal_axes needs log_x and log_y")
+        v = np.concatenate([d[x].to_numpy(float), d[y].to_numpy(float)])
+        lo, hi = 10.0 ** np.floor(np.log10(v.min())), 10.0 ** np.ceil(np.log10(v.max()))
+        ax.set_xlim(lo, hi)
+        ax.set_ylim(lo, hi)
+        ax.set_aspect("equal", adjustable="box")
+    lines = cfg.get("identity_line") or []
+    lines = [lines] if isinstance(lines, dict) else lines
+    spans = []  # (a, b, f): x range of each y = f * x line inside the axes
+    for line in lines:
+        f = float(line.get("factor", 1))
+        (x0, x1), (y0, y1) = ax.get_xlim(), ax.get_ylim()
+        a, b = max(x0, y0 / f), min(x1, y1 / f)
+        ax.plot([a, b], [f * a, f * b], color=REF, linewidth=1.0, zorder=2)
+        spans.append((a, b, f))
     ax.grid(True, which="major", color=SURFACE, linewidth=1.0, zorder=0)
     ax.set_axisbelow(True)
     for s in ("top", "right"):
@@ -140,8 +176,9 @@ def draw(df, cfg, interactive):
     # selective direct labels: extremes of each measure, named with INK2 text (never the series color)
     n = int(cfg.get("label_top", 3))
     pick = []
+    cand = d[d[cat] == on] if hl else d
     for col in (y, x) + ((ratio,) if ratio in d.columns else ()):
-        pick += list(d[col].nlargest(n).index)
+        pick += list(cand[col].nlargest(n).index)
     seen = set()
     lab_col = cfg.get("label_column", "municipios_name")
 
@@ -156,6 +193,15 @@ def draw(df, cfg, interactive):
     fig.canvas.draw()
     rend = fig.canvas.get_renderer()
     placed = []
+    for line, (a, b, f) in zip(lines, spans):
+        if not line.get("label"):
+            continue
+        p0, p1 = ax.transData.transform([(a, f * a), (b, f * b)])
+        angle = np.degrees(np.arctan2(p1[1] - p0[1], p1[0] - p0[0]))
+        at = a * (b / a) ** 0.93  # near the upper end of the line
+        lt = ax.annotate(line["label"], (at, f * at), xytext=(0, 4), textcoords="offset points", fontsize=8, color=INK2,
+                         rotation=angle, rotation_mode="anchor", ha="right", va="bottom", zorder=4)
+        placed.append(lt.get_window_extent(rend).expanded(1.04, 1.25))
     # label offsets (points) tried in order; the first whose box stays inside the axes and clear of earlier labels wins
     cands = [(8, 8, "left"), (8, -14, "left"), (-8, 8, "right"), (-8, -14, "right"), (8, 24, "left"), (-8, 24, "right"),
              (8, -30, "left"), (-8, -30, "right"), (8, 40, "left"), (-8, 40, "right"),
@@ -164,7 +210,8 @@ def draw(df, cfg, interactive):
              (-150, 10, "right"), (-150, -20, "right"), (-200, 10, "right"), (-200, -30, "right"),
              (-20, -100, "right"), (-20, -150, "right"), (-20, -200, "right"), (-20, -250, "right"), (-100, -120, "right"), (-100, -200, "right")]
     axbox = ax.get_window_extent(rend)
-    pts = ax.transData.transform(np.column_stack([d[x].to_numpy(), d[y].to_numpy()]))  # dots are obstacles too
+    gap = fig.dpi * float(cfg.get("label_gap", 0)) / 72  # extra horizontal clearance between labels (points -> pixels)
+    pts = ax.transData.transform(np.column_stack([cand[x].to_numpy(), cand[y].to_numpy()]))  # dots are obstacles too (highlight: its own only)
     for i in pick:
         if i in seen:
             continue
@@ -177,7 +224,7 @@ def draw(df, cfg, interactive):
             t = ax.annotate(name, (d.loc[i, x], d.loc[i, y]), xytext=(dx, dy), textcoords="offset points", fontsize=8, color=INK2,
                             ha=ha, arrowprops=dict(arrowstyle="-", color=MUTED, lw=0.6), zorder=4)
             t.update_positions(rend)
-            bb = matplotlib.text.Text.get_window_extent(t, rend).expanded(1.04, 1.25)  # the text only, not the leader line
+            bb = matplotlib.text.Text.get_window_extent(t, rend).expanded(1.04, 1.25).padded(gap, 0)  # the text only, not the leader line
             inside = axbox.x0 <= bb.x0 and bb.x1 <= axbox.x1 and axbox.y0 <= bb.y0 and bb.y1 <= axbox.y1
             on_dot = ((pts[:, 0] > bb.x0 - 4) & (pts[:, 0] < bb.x1 + 4) & (pts[:, 1] > bb.y0 - 4) & (pts[:, 1] < bb.y1 + 4)).any()
             if inside and not on_dot and not any(bb.overlaps(o) for o in placed):
