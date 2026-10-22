@@ -1,0 +1,1118 @@
+{
+ "input_folder": "/path/to/folder",
+ "output_folder": "/path/to/folder",
+ "prefix": "ANA_ATLAS-AGUAS",
+ "extent": "BRASIL",
+ "year": "2021",
+ "na_text": "NA",
+ "layers": [
+  {
+   "name": "ISH",
+   "source": "indicadores_seguranca_hidrica.csv",
+   "type": "csv",
+   "description_pt": "Índice de Segurança Hídrica do abastecimento urbano e indicadores, por município (2020)",
+   "description_en": "Urban water supply security index and indicators, by municipality (2020)",
+   "columns": [
+    {
+     "from": "CodMun",
+     "to": "municipio_code",
+     "description_pt": "Código IBGE do município (7 dígitos)",
+     "description_en": "IBGE municipality code (7 digits)",
+     "kind": "text",
+     "unit": "",
+     "check": "^\\d{7}$"
+    },
+    {
+     "from": "NmMun",
+     "to": "municipio_name",
+     "description_pt": "Nome do município",
+     "description_en": "Municipality name",
+     "kind": "text",
+     "unit": ""
+    },
+    {
+     "from": "SgUF",
+     "to": "unidade_alias",
+     "description_pt": "Sigla da unidade da federação",
+     "description_en": "State abbreviation",
+     "kind": "text",
+     "unit": "",
+     "check": "^[A-Z]{2}$"
+    },
+    {
+     "from": "SgRg",
+     "to": "regiao_name",
+     "description_pt": "Região geográfica do município",
+     "description_en": "Geographic region of the municipality",
+     "kind": "text",
+     "unit": ""
+    },
+    {
+     "from": "pop_urb_2020",
+     "to": "population_urban_2020",
+     "description_pt": "População urbana em 2020",
+     "description_en": "Urban population in 2020",
+     "kind": "number",
+     "unit": "inhabitants"
+    },
+    {
+     "from": "clas_manancial_2020",
+     "to": "source_vulnerability_2020",
+     "description_pt": "Classificação da vulnerabilidade do manancial (2020)",
+     "description_en": "Water source vulnerability class (2020)",
+     "kind": "text",
+     "unit": ""
+    },
+    {
+     "from": "clas_sistema_2020",
+     "to": "system_class_2020",
+     "description_pt": "Classificação do sistema produtor de água (2020)",
+     "description_en": "Water production system class (2020)",
+     "kind": "text",
+     "unit": ""
+    },
+    {
+     "from": "efi_producao_agua_2020",
+     "to": "production_efficiency_2020",
+     "description_pt": "Eficiência da produção de água (2020)",
+     "description_en": "Water production efficiency (2020)",
+     "kind": "text",
+     "unit": ""
+    },
+    {
+     "from": "perdas_distribuicao_agua_2020",
+     "to": "distribution_loss_2020",
+     "description_pt": "Indicador de perdas na distribuição de água (2020)",
+     "description_en": "Water distribution loss indicator (2020)",
+     "kind": "text",
+     "unit": ""
+    },
+    {
+     "from": "perdas_preenchido_2020",
+     "to": "distribution_loss_filled_2020",
+     "description_pt": "Indicador de perdas na distribuição (2020) com lacunas preenchidas (classe D onde \"Sem Informação\")",
+     "description_en": "Distribution loss indicator (2020) with gaps filled (class D where \"Sem Informação\")",
+     "kind": "text",
+     "unit": ""
+    },
+    {
+     "from": "cober_abastecimento_2020",
+     "to": "supply_coverage_2020",
+     "description_pt": "Percentual da população urbana atendida pelo abastecimento de água (2020)",
+     "description_en": "Share of urban population served by water supply (2020)",
+     "kind": "number",
+     "unit": "%"
+    },
+    {
+     "from": "cober_preenchido_2020",
+     "to": "supply_coverage_filled_2020",
+     "description_pt": "Cobertura do abastecimento (2020) com lacunas preenchidas por estimativa (média de referência) onde não há dado informado",
+     "description_en": "Supply coverage (2020) with gaps filled by an estimated reference mean where no reported value exists",
+     "kind": "number",
+     "unit": "%"
+    },
+    {
+     "from": "efi_distribuicao_agua_2020",
+     "to": "distribution_efficiency_2020",
+     "description_pt": "Eficiência da distribuição de água (2020)",
+     "description_en": "Water distribution efficiency (2020)",
+     "kind": "text",
+     "unit": ""
+    },
+    {
+     "from": "ish_u_final",
+     "to": "water_security_urban_2020",
+     "description_pt": "Índice de Segurança Hídrica do abastecimento urbano (2020)",
+     "description_en": "Urban water supply security index (2020)",
+     "kind": "text",
+     "unit": ""
+    }
+   ]
+  },
+  {
+   "name": "INVESTMENT-DISTRIBUTION",
+   "source": "investimentos_distribuicao_dados.csv",
+   "type": "csv",
+   "description_pt": "Investimentos previstos em distribuição de água e reposição de ativos, por município (até 2035)",
+   "description_en": "Planned water distribution and asset replacement investments, by municipality (until 2035)",
+   "value_maps": {
+    "regiao_name": {
+     "NO": "Norte",
+     "NE": "Nordeste",
+     "SE": "Sudeste",
+     "S": "Sul",
+     "CO": "Centro-Oeste"
+    }
+   },
+   "columns": [
+    {
+     "from": "CodMun",
+     "to": "municipio_code",
+     "description_pt": "Código IBGE do município (7 dígitos)",
+     "description_en": "IBGE municipality code (7 digits)",
+     "kind": "text",
+     "unit": "",
+     "check": "^\\d{7}$"
+    },
+    {
+     "from": "NmMun",
+     "to": "municipio_name",
+     "description_pt": "Nome do município",
+     "description_en": "Municipality name",
+     "kind": "text",
+     "unit": ""
+    },
+    {
+     "from": "SgUF",
+     "to": "unidade_alias",
+     "description_pt": "Sigla da unidade da federação",
+     "description_en": "State abbreviation",
+     "kind": "text",
+     "unit": "",
+     "check": "^[A-Z]{2}$"
+    },
+    {
+     "from": "SgRg",
+     "to": "regiao_name",
+     "description_pt": "Região geográfica do município",
+     "description_en": "Geographic region of the municipality",
+     "kind": "text",
+     "unit": ""
+    },
+    {
+     "from": "invest_distribuicao_rede_2025",
+     "to": "investment_distribution_network_until2025",
+     "description_pt": "Investimento na distribuição de água da rede, até 2025",
+     "description_en": "Water distribution investment, network, until 2025",
+     "kind": "number",
+     "unit": "BRL"
+    },
+    {
+     "from": "invest_distribuicao_rede_2026_2030",
+     "to": "investment_distribution_network_2026to2030",
+     "description_pt": "Investimento na distribuição de água da rede, de 2026 a 2030",
+     "description_en": "Water distribution investment, network, from 2026 to 2030",
+     "kind": "number",
+     "unit": "BRL"
+    },
+    {
+     "from": "invest_distribuicao_rede_2031_2035",
+     "to": "investment_distribution_network_2031to2035",
+     "description_pt": "Investimento na distribuição de água da rede, de 2031 a 2035",
+     "description_en": "Water distribution investment, network, from 2031 to 2035",
+     "kind": "number",
+     "unit": "BRL"
+    },
+    {
+     "from": "invest_distribuicao_ligacoes_2025",
+     "to": "investment_distribution_connections_until2025",
+     "description_pt": "Investimento na distribuição de água das ligações, até 2025",
+     "description_en": "Water distribution investment, connections, until 2025",
+     "kind": "number",
+     "unit": "BRL"
+    },
+    {
+     "from": "invest_distribuicao_ligacoes_2026_2030",
+     "to": "investment_distribution_connections_2026to2030",
+     "description_pt": "Investimento na distribuição de água das ligações, de 2026 a 2030",
+     "description_en": "Water distribution investment, connections, from 2026 to 2030",
+     "kind": "number",
+     "unit": "BRL"
+    },
+    {
+     "from": "invest_distribuicao_ligacoes_2031_2035",
+     "to": "investment_distribution_connections_2031to2035",
+     "description_pt": "Investimento na distribuição de água das ligações, de 2031 a 2035",
+     "description_en": "Water distribution investment, connections, from 2031 to 2035",
+     "kind": "number",
+     "unit": "BRL"
+    },
+    {
+     "from": "invest_distribuicao_reservacao_2035",
+     "to": "investment_distribution_storage_until2035",
+     "description_pt": "Investimento na distribuição de água em reservação, até 2035",
+     "description_en": "Water distribution investment, storage, until 2035",
+     "kind": "number",
+     "unit": "BRL"
+    },
+    {
+     "from": "invest_distribuicao_total_2035",
+     "to": "investment_distribution_total_until2035",
+     "description_pt": "Investimento na distribuição de água, total até 2035",
+     "description_en": "Water distribution investment, total until 2035",
+     "kind": "number",
+     "unit": "BRL"
+    },
+    {
+     "from": "invest_reposicao_rede_2025",
+     "to": "investment_replacement_network_until2025",
+     "description_pt": "Investimento em reposição dos ativos de distribuição da rede, até 2025",
+     "description_en": "Distribution asset replacement investment, network, until 2025",
+     "kind": "number",
+     "unit": "BRL"
+    },
+    {
+     "from": "invest_reposicao_rede_2026_2030",
+     "to": "investment_replacement_network_2026to2030",
+     "description_pt": "Investimento em reposição dos ativos de distribuição da rede, de 2026 a 2030",
+     "description_en": "Distribution asset replacement investment, network, from 2026 to 2030",
+     "kind": "number",
+     "unit": "BRL"
+    },
+    {
+     "from": "invest_reposicao_rede_2031_2035",
+     "to": "investment_replacement_network_2031to2035",
+     "description_pt": "Investimento em reposição dos ativos de distribuição da rede, de 2031 a 2035",
+     "description_en": "Distribution asset replacement investment, network, from 2031 to 2035",
+     "kind": "number",
+     "unit": "BRL"
+    },
+    {
+     "from": "invest_reposicao_ligacoes_2025",
+     "to": "investment_replacement_connections_until2025",
+     "description_pt": "Investimento em reposição dos ativos de distribuição das ligações, até 2025",
+     "description_en": "Distribution asset replacement investment, connections, until 2025",
+     "kind": "number",
+     "unit": "BRL"
+    },
+    {
+     "from": "invest_reposicao_ligacoes_2026_2030",
+     "to": "investment_replacement_connections_2026to2030",
+     "description_pt": "Investimento em reposição dos ativos de distribuição das ligações, de 2026 a 2030",
+     "description_en": "Distribution asset replacement investment, connections, from 2026 to 2030",
+     "kind": "number",
+     "unit": "BRL"
+    },
+    {
+     "from": "invest_reposicao_ligacoes_2031_2035",
+     "to": "investment_replacement_connections_2031to2035",
+     "description_pt": "Investimento em reposição dos ativos de distribuição das ligações, de 2031 a 2035",
+     "description_en": "Distribution asset replacement investment, connections, from 2031 to 2035",
+     "kind": "number",
+     "unit": "BRL"
+    },
+    {
+     "from": "invest_reposicao_reservacao_2035",
+     "to": "investment_replacement_storage_until2035",
+     "description_pt": "Investimento em reposição dos ativos de distribuição em reservação, até 2035",
+     "description_en": "Distribution asset replacement investment, storage, until 2035",
+     "kind": "number",
+     "unit": "BRL"
+    },
+    {
+     "from": "invest_reposicao_total_2035",
+     "to": "investment_replacement_total_until2035",
+     "description_pt": "Investimento em reposição dos ativos de distribuição, total até 2035",
+     "description_en": "Distribution asset replacement investment, total until 2035",
+     "kind": "number",
+     "unit": "BRL"
+    }
+   ]
+  },
+  {
+   "name": "INVESTMENT-PRODUCTION",
+   "source": "investimentos_producao_dados.csv",
+   "type": "csv",
+   "description_pt": "Intervenções e investimentos previstos em produção de água; várias linhas por município",
+   "description_en": "Planned water production interventions and investments; several rows per municipality",
+   "value_maps": {
+    "planning_type": {
+     "Estudos de Alternativa - Ampliação do sistema": "Estudos de Alternativa - Ampliação do Sistema"
+    }
+   },
+   "columns": [
+    {
+     "from": "municipio_code",
+     "to": "municipio_code",
+     "description_pt": "Código IBGE do município (7 dígitos)",
+     "description_en": "IBGE municipality code (7 digits)",
+     "kind": "text",
+     "unit": "",
+     "check": "^\\d{7}$"
+    },
+    {
+     "from": "municipio_name",
+     "to": "municipio_name",
+     "description_pt": "Nome do município",
+     "description_en": "Municipality name",
+     "kind": "text",
+     "unit": ""
+    },
+    {
+     "from": "unidade_alias",
+     "to": "unidade_alias",
+     "description_pt": "Sigla da unidade da federação",
+     "description_en": "State abbreviation",
+     "kind": "text",
+     "unit": "",
+     "check": "^[A-Z]{2}$"
+    },
+    {
+     "from": "tipologia_planejamento",
+     "to": "planning_type",
+     "description_pt": "Tipologia de planejamento em produção de água",
+     "description_en": "Water production planning type",
+     "kind": "text",
+     "unit": ""
+    },
+    {
+     "from": "eppos_proposta",
+     "to": "proposal_name",
+     "description_pt": "Proposta de Estudo, Plano, Projeto ou Obra (EPPO)",
+     "description_en": "Proposed study, plan, project or work (EPPO)",
+     "kind": "text",
+     "unit": ""
+    },
+    {
+     "from": "tipo_intervencao",
+     "to": "intervention_type",
+     "description_pt": "Tipo da intervenção",
+     "description_en": "Intervention type",
+     "kind": "text",
+     "unit": "",
+     "list": {
+      "separators": [
+       "; "
+      ]
+     }
+    },
+    {
+     "from": "manancial",
+     "to": "source_name",
+     "description_pt": "Manancial",
+     "description_en": "Water source name",
+     "kind": "text",
+     "unit": "",
+     "list": {
+      "separators": [
+       " / "
+      ]
+     }
+    },
+    {
+     "from": "nro_municipios_atendidos",
+     "to": "served_municipios_count",
+     "description_pt": "Número de municípios atendidos",
+     "description_en": "Number of municipalities served",
+     "kind": "number",
+     "unit": "count"
+    },
+    {
+     "from": "municipios_atendidos",
+     "to": "served_municipios_name",
+     "description_pt": "Municípios atendidos, em lista",
+     "description_en": "Municipalities served, as a list",
+     "kind": "text",
+     "unit": "",
+     "list": {
+      "separators": []
+     },
+     "split_suffix": {
+      "to": "served_unidades_alias",
+      "separator": " / ",
+      "pattern": "^(.*?)\\s*-\\s*([A-Z]{2})$"
+     }
+    },
+    {
+     "from": null,
+     "to": "served_unidades_alias",
+     "description_pt": "Siglas das UFs dos municípios atendidos, na mesma ordem de served_municipios_name",
+     "description_en": "State abbreviations extracted from the source text, same item order as served_municipios_name",
+     "kind": "text",
+     "unit": "",
+     "check": "^[A-Z]{2}(?: \\| (?:[A-Z]{2}|NA))*$",
+     "list": {
+      "separators": []
+     }
+    },
+    {
+     "from": "estudo_complementar",
+     "to": "complementary_study_required",
+     "description_pt": "Necessita de estudo complementar (EC)?",
+     "description_en": "Complementary study required (EC)?",
+     "kind": "text",
+     "unit": ""
+    },
+    {
+     "from": "invest_infra_recomendada",
+     "to": "investment_recommended",
+     "description_pt": "Investimento em infraestrutura recomendada",
+     "description_en": "Recommended infrastructure investment",
+     "kind": "number",
+     "unit": "million BRL"
+    },
+    {
+     "from": "invest_infra_potencial",
+     "to": "investment_potential",
+     "description_pt": "Investimento em infraestrutura potencial",
+     "description_en": "Potential infrastructure investment",
+     "kind": "number",
+     "unit": "million BRL"
+    },
+    {
+     "from": "irea_descricao",
+     "to": "alternatives_description",
+     "description_pt": "Infraestrutura que requer estudo de alternativas (IREA): descrição",
+     "description_en": "Infrastructure requiring an alternatives study (IREA): description",
+     "kind": "text",
+     "unit": "",
+     "list": {
+      "separators": [
+       " / "
+      ]
+     }
+    },
+    {
+     "from": "irea_nro_municipios_atendidos",
+     "to": "alternatives_served_municipios_count",
+     "description_pt": "IREA: número de municípios atendidos",
+     "description_en": "IREA: number of municipalities served",
+     "kind": "number",
+     "unit": "count"
+    },
+    {
+     "from": "irea_municipios_atendidos",
+     "to": "alternatives_served_municipios_name",
+     "description_pt": "IREA: municípios beneficiados, em lista",
+     "description_en": "IREA: municipalities benefited, as a list",
+     "kind": "text",
+     "unit": "",
+     "list": {
+      "separators": []
+     },
+     "split_suffix": {
+      "to": "alternatives_served_unidades_alias",
+      "separator": " / ",
+      "pattern": "^(.*?)\\s*-\\s*([A-Z]{2})$"
+     }
+    },
+    {
+     "from": null,
+     "to": "alternatives_served_unidades_alias",
+     "description_pt": "IREA: siglas das UFs dos municípios beneficiados, na mesma ordem de alternatives_served_municipios_name",
+     "description_en": "State abbreviations extracted from the source text, same item order as alternatives_served_municipios_name",
+     "kind": "text",
+     "unit": "",
+     "check": "^[A-Z]{2}(?: \\| (?:[A-Z]{2}|NA))*$",
+     "list": {
+      "separators": []
+     }
+    },
+    {
+     "from": "invest_irea",
+     "to": "alternatives_investment",
+     "description_pt": "IREA: investimento",
+     "description_en": "IREA: investment",
+     "kind": "number",
+     "unit": "million BRL"
+    }
+   ]
+  },
+  {
+   "name": "SOURCE-SYSTEMS",
+   "source": "mananciais_sistemas_dados.csv",
+   "type": "csv",
+   "description_pt": "Mananciais, sistemas produtores e operadores de abastecimento, por município",
+   "description_en": "Water sources, production systems and supply operators, by municipality",
+   "columns": [
+    {
+     "from": "municipio_code",
+     "to": "municipio_code",
+     "description_pt": "Código IBGE do município (7 dígitos)",
+     "description_en": "IBGE municipality code (7 digits)",
+     "kind": "text",
+     "unit": "",
+     "check": "^\\d{7}$"
+    },
+    {
+     "from": "municipio_name",
+     "to": "municipio_name",
+     "description_pt": "Nome do município",
+     "description_en": "Municipality name",
+     "kind": "text",
+     "unit": ""
+    },
+    {
+     "from": "unidade_alias",
+     "to": "unidade_alias",
+     "description_pt": "Sigla da unidade da federação",
+     "description_en": "State abbreviation",
+     "kind": "text",
+     "unit": "",
+     "check": "^[A-Z]{2}$"
+    },
+    {
+     "from": "regiaometro_name",
+     "to": "metropolitan_region_name",
+     "description_pt": "Região metropolitana",
+     "description_en": "Metropolitan region",
+     "kind": "text",
+     "unit": ""
+    },
+    {
+     "from": "population_urban_2020",
+     "to": "population_urban_2020",
+     "description_pt": "População urbana em 2020",
+     "description_en": "Urban population in 2020",
+     "kind": "number",
+     "unit": "inhabitants"
+    },
+    {
+     "from": "population_urban_2035",
+     "to": "population_urban_2035",
+     "description_pt": "População urbana projetada para 2035",
+     "description_en": "Projected urban population in 2035",
+     "kind": "number",
+     "unit": "inhabitants"
+    },
+    {
+     "from": "demand_urban_2020",
+     "to": "demand_urban_2020",
+     "description_pt": "Demanda urbana de água em 2020",
+     "description_en": "Urban water demand in 2020",
+     "kind": "number",
+     "unit": "l/s"
+    },
+    {
+     "from": "demand_urban_2035",
+     "to": "demand_urban_2035",
+     "description_pt": "Demanda urbana de água projetada para 2035",
+     "description_en": "Projected urban water demand in 2035",
+     "kind": "number",
+     "unit": "l/s"
+    },
+    {
+     "from": "operador_name",
+     "to": "operator_name",
+     "description_pt": "Operador oficial",
+     "description_en": "Official operator",
+     "kind": "text",
+     "unit": ""
+    },
+    {
+     "from": "operador_type",
+     "to": "operator_type",
+     "description_pt": "Tipo de operador",
+     "description_en": "Operator type",
+     "kind": "text",
+     "unit": ""
+    },
+    {
+     "from": "system_name",
+     "to": "system_name",
+     "description_pt": "Sistema(s) produtor(es)",
+     "description_en": "Production system(s)",
+     "kind": "text",
+     "unit": "",
+     "list": {
+      "separators": [
+       " / ",
+       "; "
+      ]
+     }
+    },
+    {
+     "from": "system_type",
+     "to": "system_type",
+     "description_pt": "Tipo de sistema(s)",
+     "description_en": "System type(s)",
+     "kind": "text",
+     "unit": "",
+     "list": {
+      "separators": [
+       " / "
+      ]
+     }
+    },
+    {
+     "from": "source_name",
+     "to": "source_name",
+     "description_pt": "Manancial(is) de abastecimento",
+     "description_en": "Supply water source(s)",
+     "kind": "text",
+     "unit": "",
+     "list": {
+      "separators": [
+       " / "
+      ]
+     }
+    },
+    {
+     "from": "source_type",
+     "to": "source_type",
+     "description_pt": "Tipo de manancial(is)",
+     "description_en": "Water source type(s)",
+     "kind": "text",
+     "unit": "",
+     "list": {
+      "separators": [
+       " / "
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "SYSTEMS-MUNICIPALITIES",
+   "source": "municipios_systems.csv",
+   "type": "csv",
+   "description_pt": "Vínculo município x sistema x manancial, com o percentual da população urbana do município atendido (soma 100 por município)",
+   "description_en": "Municipality x system x water source link, with the share of the municipality urban population served (sums to 100 per municipality)",
+   "drop": [
+    "id",
+    "regiaohidro_name",
+    "uph_name",
+    "ugrh_name",
+    "massadagua_type"
+   ],
+   "columns": [
+    {
+     "from": "sistema_name",
+     "to": "system_name",
+     "description_pt": "Nome do sistema de abastecimento",
+     "description_en": "Supply system name",
+     "kind": "text",
+     "unit": "",
+     "list": {
+      "separators": [
+       " / ",
+       "; "
+      ]
+     }
+    },
+    {
+     "from": "sistema_type",
+     "to": "system_type",
+     "description_pt": "Tipo de sistema (isolado ou integrado)",
+     "description_en": "System type (isolated or integrated)",
+     "kind": "text",
+     "unit": ""
+    },
+    {
+     "from": "municipio_code",
+     "to": "municipio_code",
+     "description_pt": "Código IBGE do município (7 dígitos)",
+     "description_en": "IBGE municipality code (7 digits)",
+     "kind": "text",
+     "unit": "",
+     "check": "^\\d{7}$"
+    },
+    {
+     "from": "municipio_name",
+     "to": "municipio_name",
+     "description_pt": "Nome do município",
+     "description_en": "Municipality name",
+     "kind": "text",
+     "unit": ""
+    },
+    {
+     "from": "unidade_sigla",
+     "to": "unidade_alias",
+     "description_pt": "Sigla da unidade da federação",
+     "description_en": "State abbreviation",
+     "kind": "text",
+     "unit": "",
+     "check": "^[A-Z]{2}$"
+    },
+    {
+     "from": "water_source_name",
+     "to": "source_name",
+     "description_pt": "Nome do manancial",
+     "description_en": "Water source name",
+     "kind": "text",
+     "unit": "",
+     "list": {
+      "separators": [
+       " / "
+      ]
+     }
+    },
+    {
+     "from": "intake_type",
+     "to": "intake_type",
+     "description_pt": "Tipo de captação (superficial ou subterrânea)",
+     "description_en": "Intake type (surface or groundwater)",
+     "kind": "text",
+     "unit": ""
+    },
+    {
+     "from": "covered_percent_by_intake",
+     "to": "intake_covered_percent",
+     "description_pt": "Percentual da população urbana do município atendido por esta linha (sistema e manancial); soma 100 por município",
+     "description_en": "Share of the municipality urban population served by this row (system and source); sums to 100 per municipality",
+     "kind": "number",
+     "unit": "%"
+    },
+    {
+     "from": "sistema_municipios",
+     "to": "system_municipios_name",
+     "description_pt": "Nomes dos municípios atendidos pelo sistema, em lista (pode omitir o município da linha)",
+     "description_en": "Names of the municipalities served by the system, as a list (may omit the row's own municipality)",
+     "kind": "text",
+     "unit": "",
+     "split_suffix": {
+      "to": "system_unidades_alias",
+      "separator": " | ",
+      "pattern": "^(.*?)\\s*\\(([A-Z]{2})\\)$"
+     },
+     "list": {
+      "separators": []
+     }
+    },
+    {
+     "from": null,
+     "to": "system_unidades_alias",
+     "description_pt": "Siglas das UFs dos municípios atendidos pelo sistema, na mesma ordem de system_municipios_name",
+     "description_en": "State abbreviations extracted from the source text, same item order as system_municipios_name",
+     "kind": "text",
+     "unit": "",
+     "check": "^[A-Z]{2}(?: \\| (?:[A-Z]{2}|NA))*$",
+     "list": {
+      "separators": []
+     }
+    }
+   ]
+  },
+  {
+   "name": "AQUEDUCTS",
+   "source": "aquedutos.gpkg",
+   "type": "gpkg",
+   "layer_in": "main",
+   "description_pt": "Adutoras e canais (linhas)",
+   "description_en": "Aqueducts and canals (lines)",
+   "value_maps": {
+    "aqueduct_type": {
+     "Infraestrutura recomendada": "Infraestrutura Recomendada"
+    }
+   },
+   "columns": [
+    {
+     "from": "adt_id",
+     "to": "aqueduct_id",
+     "description_pt": "Identificador do trecho",
+     "description_en": "Segment identifier",
+     "kind": "integer",
+     "unit": ""
+    },
+    {
+     "from": "adt_status",
+     "to": "aqueduct_status",
+     "description_pt": "Situação",
+     "description_en": "Status",
+     "kind": "text",
+     "unit": ""
+    },
+    {
+     "from": "adt_nm_adu",
+     "to": "aqueduct_name",
+     "description_pt": "Nome do sistema adutor",
+     "description_en": "Aqueduct system name",
+     "kind": "text",
+     "unit": ""
+    },
+    {
+     "from": "adt_ramal",
+     "to": "aqueduct_branch",
+     "description_pt": "Ramal",
+     "description_en": "Branch",
+     "kind": "text",
+     "unit": ""
+    },
+    {
+     "from": "adt_uf",
+     "to": "unidade_alias",
+     "description_pt": "Sigla da unidade da federação",
+     "description_en": "State abbreviation",
+     "kind": "text",
+     "unit": ""
+    },
+    {
+     "from": "adt_tipo",
+     "to": "aqueduct_type",
+     "description_pt": "Tipologia de infraestrutura",
+     "description_en": "Infrastructure type",
+     "kind": "text",
+     "unit": ""
+    },
+    {
+     "from": "adt_finali",
+     "to": "aqueduct_purpose",
+     "description_pt": "Finalidade (adutora ou canal)",
+     "description_en": "Purpose (aqueduct or canal)",
+     "kind": "text",
+     "unit": ""
+    }
+   ]
+  },
+  {
+   "name": "INTAKES",
+   "source": "pontos_captacao.gpkg",
+   "type": "gpkg",
+   "layer_in": "main",
+   "description_pt": "Pontos de captação de água para abastecimento",
+   "description_en": "Water intake points for supply",
+   "value_maps": {
+    "intake_use_status": {
+     "Uso permanente": "Uso Permanente"
+    }
+   },
+   "columns": [
+    {
+     "from": null,
+     "to": "intake_code",
+     "description_pt": "Código do ponto de captação: IN + latitude (+90) e longitude (+180) em unidades de 0,0001 grau (7 + 7 dígitos, cerca de 11 m) + ordinal de 3 dígitos entre pontos no mesmo local; determinístico",
+     "description_en": "Intake point code: IN + latitude (+90) and longitude (+180) in 0.0001 degree units (7 + 7 digits, about 11 m) + 3-digit ordinal among points at the same location; deterministic",
+     "kind": "text",
+     "unit": "",
+     "check": "^IN\\d{17}$"
+    },
+    {
+     "from": "massadagua_code",
+     "to": "waterbody_code",
+     "description_pt": "Código da massa d'água",
+     "description_en": "Water body code",
+     "kind": "text",
+     "unit": ""
+    },
+    {
+     "from": "nm_massa_d",
+     "to": "waterbody_name",
+     "description_pt": "Nome da massa d'água",
+     "description_en": "Water body name",
+     "kind": "text",
+     "unit": ""
+    },
+    {
+     "from": "sistema",
+     "to": "system_name",
+     "description_pt": "Sistema de abastecimento",
+     "description_en": "Supply system name",
+     "kind": "text",
+     "unit": "",
+     "list": {
+      "separators": [
+       " / ",
+       ","
+      ],
+      "known": {
+       "layer": "SYSTEMS-MUNICIPALITIES",
+       "column": "system_name"
+      }
+     }
+    },
+    {
+     "from": "nm_captaca",
+     "to": "intake_name",
+     "description_pt": "Nome da captação",
+     "description_en": "Intake name",
+     "kind": "text",
+     "unit": ""
+    },
+    {
+     "from": "nm_fantasi",
+     "to": "intake_tradename",
+     "description_pt": "Nome fantasia da captação",
+     "description_en": "Intake trade name",
+     "kind": "text",
+     "unit": ""
+    },
+    {
+     "from": "tp_captaca",
+     "to": "intake_type",
+     "description_pt": "Tipo de captação (superficial ou subterrânea)",
+     "description_en": "Intake type (surface or groundwater)",
+     "kind": "text",
+     "unit": ""
+    },
+    {
+     "from": "status_man",
+     "to": "intake_use_status",
+     "description_pt": "Situação de uso da captação",
+     "description_en": "Intake use status",
+     "kind": "text",
+     "unit": ""
+    },
+    {
+     "from": "tp_tratame",
+     "to": "treatment_type",
+     "description_pt": "Tipo de tratamento",
+     "description_en": "Treatment type",
+     "kind": "text",
+     "unit": ""
+    },
+    {
+     "from": "nm_municip",
+     "to": "municipio_name",
+     "description_pt": "Nome do município; vários municípios em lista (sigla da UF separada em unidade_alias, na mesma ordem)",
+     "description_en": "Municipality name; several municipalities as a list (state abbreviation split into unidade_alias, same item order)",
+     "kind": "text",
+     "unit": "",
+     "split_suffix": {
+      "to": "unidade_alias"
+     },
+     "list": {
+      "separators": []
+     }
+    },
+    {
+     "from": null,
+     "to": "unidade_alias",
+     "description_pt": "Sigla da unidade da federação, extraída do nome do município de origem, na mesma ordem dos municípios (NA onde o texto de origem foi cortado)",
+     "description_en": "State abbreviation extracted from the source municipality name, same order as the municipalities (NA where the source text was cut)",
+     "kind": "text",
+     "unit": "",
+     "check": "^[A-Z]{2}(?: \\| (?:[A-Z]{2}|NA))*$",
+     "list": {
+      "separators": []
+     }
+    },
+    {
+     "from": "geom_obs",
+     "to": "geometry_note",
+     "description_pt": "Observação sobre a origem da geometria",
+     "description_en": "Note on the geometry origin",
+     "kind": "text",
+     "unit": ""
+    }
+   ],
+   "code_from_location": {
+    "to": "intake_code",
+    "prefix": "IN",
+    "ordinal_width": 3,
+    "order_by": [
+     "system_name",
+     "intake_name",
+     "intake_tradename"
+    ],
+    "decimals": 4
+   }
+  },
+  {
+   "name": "CATCHMENTS",
+   "source": "catchments.gpkg",
+   "type": "gpkg",
+   "layer_pattern": "catchments_*",
+   "unique_key": "intake_code",
+   "description_pt": "Bacias de contribuição (polígonos) dos pontos de captação; camadas de blocos unidas em uma só",
+   "description_en": "Catchment polygons of the intake points; chunk layers merged into one",
+   "columns": [
+    {
+     "from": "intake_code",
+     "to": "intake_code",
+     "description_pt": "Código do ponto de captação (ver INTAKES)",
+     "description_en": "Intake point code (see INTAKES)",
+     "kind": "text",
+     "unit": "",
+     "check": "^IN\\d{17}$",
+     "references": {
+      "layer": "INTAKES",
+      "column": "intake_code"
+     }
+    },
+    {
+     "from": "catchment_source",
+     "to": "catchment_source",
+     "description_pt": "Método usado para delimitar a bacia (por exemplo raster_refined, vector_upper, manual)",
+     "description_en": "Method used to delineate the catchment (e.g. raster_refined, vector_upper, manual)",
+     "kind": "text",
+     "unit": ""
+    },
+    {
+     "from": "catchment_area_km2",
+     "to": "catchment_area_km2",
+     "description_pt": "Área da bacia de contribuição",
+     "description_en": "Catchment area",
+     "kind": "number",
+     "unit": "km2"
+    }
+   ]
+  },
+  {
+   "name": "MUNICIPALITIES",
+   "source": "dtb_2022_municipios.gpkg",
+   "type": "gpkg",
+   "layer_in": "dtb_2022_municipios",
+   "description_pt": "Limites municipais (DTB 2022)",
+   "description_en": "Municipality boundaries (DTB 2022)",
+   "columns": [
+    {
+     "from": "municipio_code",
+     "to": "municipio_code",
+     "description_pt": "Código IBGE do município (7 dígitos)",
+     "description_en": "IBGE municipality code (7 digits)",
+     "kind": "text",
+     "unit": "",
+     "check": "^\\d{7}$"
+    },
+    {
+     "from": "municipio_name",
+     "to": "municipio_name",
+     "description_pt": "Nome do município",
+     "description_en": "Municipality name",
+     "kind": "text",
+     "unit": ""
+    },
+    {
+     "from": "unidade_alias",
+     "to": "unidade_alias",
+     "description_pt": "Sigla da unidade da federação",
+     "description_en": "State abbreviation",
+     "kind": "text",
+     "unit": "",
+     "check": "^[A-Z]{2}$"
+    },
+    {
+     "from": "area_sqkm",
+     "to": "area_km2",
+     "description_pt": "Área do município",
+     "description_en": "Municipality area",
+     "kind": "number",
+     "unit": "km2"
+    }
+   ]
+  },
+  {
+   "name": "SEATS",
+   "source": "pontos_municipios_sedes.gpkg",
+   "type": "gpkg",
+   "layer_in": "main",
+   "description_pt": "Sedes municipais (pontos)",
+   "description_en": "Municipality seats (points)",
+   "columns": [
+    {
+     "from": "municipio_code",
+     "to": "municipio_code",
+     "description_pt": "Código IBGE do município (7 dígitos)",
+     "description_en": "IBGE municipality code (7 digits)",
+     "kind": "text",
+     "unit": "",
+     "check": "^\\d{7}$"
+    },
+    {
+     "from": "municipio_name",
+     "to": "municipio_name",
+     "description_pt": "Nome do município",
+     "description_en": "Municipality name",
+     "kind": "text",
+     "unit": ""
+    },
+    {
+     "from": "sede_x",
+     "to": "seat_longitude",
+     "description_pt": "Longitude da sede municipal",
+     "description_en": "Municipality seat longitude",
+     "kind": "number",
+     "unit": "degrees"
+    },
+    {
+     "from": "sede_y",
+     "to": "seat_latitude",
+     "description_pt": "Latitude da sede municipal",
+     "description_en": "Municipality seat latitude",
+     "kind": "number",
+     "unit": "degrees"
+    }
+   ]
+  }
+ ]
+}

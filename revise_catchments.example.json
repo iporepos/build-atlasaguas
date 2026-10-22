@@ -1,0 +1,13 @@
+{
+ "catchments_gpkg": "/path/to/folder/ANA_ATLAS-AGUAS_CATCHMENTS_BRASIL_2021.gpkg",
+ "catchments_layer": "ana_atlasaguas_catchments",
+ "intakes_gpkg": "/path/to/folder/ANA_ATLAS-AGUAS_INTAKES_BRASIL_2021.gpkg",
+ "intakes_layer": "ana_atlasaguas_intakes",
+ "intake_warning_m": 500,
+ "distance_crs": "ESRI:102033",
+ "revisions": [
+  "IN00000000000000001",
+  {"IN00000000000000002": {"replace": "/path/to/fix.fgb"}},
+  {"IN00000000000000003": {"replace": "/path/to/fix2.fgb"}}
+ ]
+}

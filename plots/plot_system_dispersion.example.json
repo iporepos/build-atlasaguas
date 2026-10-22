@@ -1,0 +1,26 @@
+{
+ "gpkg": "/path/to/folder/ANA_ATLASAGUAS_DB_BRAZIL_2021.gpkg",
+ "sql": "../queries/system_population_catchment.sql",
+ "output": "/path/to/folder/system_dispersion.jpg",
+ "x": "catchment_area_km2",
+ "y": "covered_population_2020",
+ "category": "system_type",
+ "category_order": [
+  "Isolado",
+  "Integrado"
+ ],
+ "x_label": "Catchment area of the system (km², summed over its intakes)",
+ "y_label": "Covered urban population, 2020 (inhabitants)",
+ "title": "Covered population vs catchment area, by supply system",
+ "log_x": true,
+ "log_y": true,
+ "label_top": 3,
+ "dpi": 200,
+ "size_inches": [
+  6.5,
+  6.5
+ ],
+ "jpeg_quality": 92,
+ "label_column": "municipios_name",
+ "panel_color": "#e4e3df"
+}

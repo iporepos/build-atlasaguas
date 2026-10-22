@@ -1,0 +1,1281 @@
+[
+ {
+  "name": "municipios_attributes",
+  "kind": "table",
+  "description_pt": "Atributos dos municípios (DTB 2022; inclui as lagoas dos Patos e Mirim), com região, operador e região metropolitana",
+  "description_en": "Municipality attributes (DTB 2022; includes the Patos and Mirim lagoons), with region, operator and metropolitan region",
+  "columns": [
+   {
+    "name": "municipio_code",
+    "type": "TEXT",
+    "not_null": true,
+    "unit": "",
+    "description_pt": "Código IBGE do município (7 dígitos)",
+    "description_en": "IBGE municipality code (7 digits)"
+   },
+   {
+    "name": "municipio_name",
+    "type": "TEXT",
+    "not_null": true,
+    "unit": "",
+    "description_pt": "Nome do município",
+    "description_en": "Municipality name"
+   },
+   {
+    "name": "unidade_alias",
+    "type": "TEXT",
+    "not_null": true,
+    "unit": "",
+    "description_pt": "Sigla da unidade da federação",
+    "description_en": "State abbreviation"
+   },
+   {
+    "name": "regiao_name",
+    "type": "TEXT",
+    "not_null": false,
+    "unit": "",
+    "description_pt": "Região geográfica (Norte, Nordeste, Sudeste, Sul, Centro-Oeste)",
+    "description_en": "Geographic region (Norte, Nordeste, Sudeste, Sul, Centro-Oeste)"
+   },
+   {
+    "name": "area_km2",
+    "type": "REAL",
+    "not_null": false,
+    "unit": "km2",
+    "description_pt": "Área do município",
+    "description_en": "Municipality area"
+   },
+   {
+    "name": "metropolitan_region_name",
+    "type": "TEXT",
+    "not_null": false,
+    "unit": "",
+    "description_pt": "Região metropolitana do município (vazio se não pertence a uma)",
+    "description_en": "Metropolitan region of the municipality (empty if none)"
+   },
+   {
+    "name": "operator_name",
+    "type": "TEXT",
+    "not_null": false,
+    "unit": "",
+    "description_pt": "Operador oficial do abastecimento",
+    "description_en": "Official supply operator"
+   },
+   {
+    "name": "operator_type",
+    "type": "TEXT",
+    "not_null": false,
+    "unit": "",
+    "description_pt": "Tipo de operador",
+    "description_en": "Operator type"
+   }
+  ],
+  "primary_key": [
+   "municipio_code"
+  ],
+  "foreign_keys": [],
+  "checks": [],
+  "uniques": [],
+  "geometry": null
+ },
+ {
+  "name": "municipios_indicators",
+  "kind": "table",
+  "description_pt": "População urbana, demanda urbana de água (2020 e projeção 2035) e Índice de Segurança Hídrica (2020) por município e ano",
+  "description_en": "Urban population, urban water demand (2020 and 2035 projection) and water security index (2020) by municipality and year",
+  "columns": [
+   {
+    "name": "municipio_code",
+    "type": "TEXT",
+    "not_null": true,
+    "unit": "",
+    "description_pt": "Código IBGE do município (7 dígitos)",
+    "description_en": "IBGE municipality code (7 digits)"
+   },
+   {
+    "name": "year",
+    "type": "INTEGER",
+    "not_null": true,
+    "unit": "",
+    "description_pt": "Ano de referência",
+    "description_en": "Reference year"
+   },
+   {
+    "name": "population_urban",
+    "type": "REAL",
+    "not_null": false,
+    "unit": "inhabitants",
+    "description_pt": "População urbana",
+    "description_en": "Urban population"
+   },
+   {
+    "name": "demand_urban",
+    "type": "REAL",
+    "not_null": false,
+    "unit": "l/s",
+    "description_pt": "Demanda urbana de água",
+    "description_en": "Urban water demand"
+   },
+   {
+    "name": "source_vulnerability",
+    "type": "TEXT",
+    "not_null": false,
+    "unit": "",
+    "description_pt": "ISH: classificação da vulnerabilidade do manancial (só 2020)",
+    "description_en": "ISH: water source vulnerability class (2020 only)"
+   },
+   {
+    "name": "system_class",
+    "type": "TEXT",
+    "not_null": false,
+    "unit": "",
+    "description_pt": "ISH: classificação do sistema produtor de água",
+    "description_en": "ISH: water production system class"
+   },
+   {
+    "name": "production_efficiency",
+    "type": "TEXT",
+    "not_null": false,
+    "unit": "",
+    "description_pt": "ISH: eficiência da produção de água",
+    "description_en": "ISH: water production efficiency"
+   },
+   {
+    "name": "distribution_loss",
+    "type": "TEXT",
+    "not_null": false,
+    "unit": "",
+    "description_pt": "ISH: indicador de perdas na distribuição",
+    "description_en": "ISH: distribution loss indicator"
+   },
+   {
+    "name": "distribution_loss_filled",
+    "type": "TEXT",
+    "not_null": false,
+    "unit": "",
+    "description_pt": "ISH: perdas na distribuição com lacunas preenchidas (classe D onde 'Sem Informação')",
+    "description_en": "ISH: distribution loss with gaps filled (class D where 'Sem Informação')"
+   },
+   {
+    "name": "supply_coverage",
+    "type": "REAL",
+    "not_null": false,
+    "unit": "%",
+    "description_pt": "ISH: percentual da população urbana atendida pelo abastecimento; vazio onde não informado",
+    "description_en": "ISH: share of urban population served by water supply; empty where not reported"
+   },
+   {
+    "name": "supply_coverage_filled",
+    "type": "REAL",
+    "not_null": false,
+    "unit": "%",
+    "description_pt": "ISH: cobertura do abastecimento com lacunas preenchidas por estimativa (média de referência)",
+    "description_en": "ISH: supply coverage with gaps filled by an estimated reference mean"
+   },
+   {
+    "name": "distribution_efficiency",
+    "type": "TEXT",
+    "not_null": false,
+    "unit": "",
+    "description_pt": "ISH: eficiência da distribuição de água",
+    "description_en": "ISH: water distribution efficiency"
+   },
+   {
+    "name": "water_security_urban",
+    "type": "TEXT",
+    "not_null": false,
+    "unit": "",
+    "description_pt": "ISH: Índice de Segurança Hídrica do abastecimento urbano",
+    "description_en": "ISH: urban water supply security index"
+   }
+  ],
+  "primary_key": [
+   "municipio_code",
+   "year"
+  ],
+  "foreign_keys": [
+   {
+    "columns": [
+     "municipio_code"
+    ],
+    "ref_table": "municipios_attributes",
+    "ref_columns": [
+     "municipio_code"
+    ]
+   }
+  ],
+  "checks": [],
+  "uniques": [],
+  "geometry": null
+ },
+ {
+  "name": "municipios_investments",
+  "kind": "table",
+  "description_pt": "Investimentos previstos em distribuição de água e reposição de ativos, por município, componente e período (totais não armazenados)",
+  "description_en": "Planned water distribution and asset replacement investments by municipality, component and period (totals not stored)",
+  "columns": [
+   {
+    "name": "municipio_code",
+    "type": "TEXT",
+    "not_null": true,
+    "unit": "",
+    "description_pt": "Código IBGE do município (7 dígitos)",
+    "description_en": "IBGE municipality code (7 digits)"
+   },
+   {
+    "name": "investment_group",
+    "type": "TEXT",
+    "not_null": true,
+    "unit": "",
+    "description_pt": "Grupo do investimento: distribution (distribuição de água) ou replacement (reposição dos ativos)",
+    "description_en": "Investment group: distribution (water distribution) or replacement (asset replacement)"
+   },
+   {
+    "name": "component",
+    "type": "TEXT",
+    "not_null": true,
+    "unit": "",
+    "description_pt": "Componente: network (rede), connections (ligações) ou storage (reservação)",
+    "description_en": "Component: network, connections or storage"
+   },
+   {
+    "name": "period",
+    "type": "TEXT",
+    "not_null": true,
+    "unit": "",
+    "description_pt": "Período: until2025, 2026to2030, 2031to2035 ou until2035 (reservação)",
+    "description_en": "Period: until2025, 2026to2030, 2031to2035 or until2035 (storage)"
+   },
+   {
+    "name": "amount_brl",
+    "type": "REAL",
+    "not_null": false,
+    "unit": "BRL",
+    "description_pt": "Valor do investimento",
+    "description_en": "Investment amount"
+   }
+  ],
+  "primary_key": [
+   "municipio_code",
+   "investment_group",
+   "component",
+   "period"
+  ],
+  "foreign_keys": [
+   {
+    "columns": [
+     "municipio_code"
+    ],
+    "ref_table": "municipios_attributes",
+    "ref_columns": [
+     "municipio_code"
+    ]
+   }
+  ],
+  "checks": [
+   "investment_group IN ('distribution','replacement')",
+   "component IN ('network','connections','storage')",
+   "period IN ('until2025','2026to2030','2031to2035','until2035')"
+  ],
+  "uniques": [],
+  "geometry": null
+ },
+ {
+  "name": "proposals",
+  "kind": "table",
+  "description_pt": "Propostas de produção de água (uma linha por proposta; os municípios ficam em proposals_municipios)",
+  "description_en": "Water production proposals (one row per proposal; municipalities are in proposals_municipios)",
+  "columns": [
+   {
+    "name": "proposal_id",
+    "type": "INTEGER",
+    "not_null": true,
+    "unit": "",
+    "description_pt": "Identificador da proposta (sequencial)",
+    "description_en": "Proposal identifier (sequential)"
+   },
+   {
+    "name": "planning_type",
+    "type": "TEXT",
+    "not_null": true,
+    "unit": "",
+    "description_pt": "Tipologia de planejamento em produção de água",
+    "description_en": "Water production planning type"
+   },
+   {
+    "name": "proposal_name",
+    "type": "TEXT",
+    "not_null": false,
+    "unit": "",
+    "description_pt": "Proposta de Estudo, Plano, Projeto ou Obra (EPPO); vazio nos estudos de alternativas",
+    "description_en": "Proposed study, plan, project or work (EPPO); empty for alternatives studies"
+   },
+   {
+    "name": "intervention_type",
+    "type": "TEXT",
+    "not_null": false,
+    "unit": "",
+    "description_pt": "Tipo da intervenção",
+    "description_en": "Intervention type"
+   },
+   {
+    "name": "source_name",
+    "type": "TEXT",
+    "not_null": false,
+    "unit": "",
+    "description_pt": "Manancial (lista separada por ' | ' quando há vários)",
+    "description_en": "Water source (list separated by ' | ' when several)"
+   },
+   {
+    "name": "complementary_study_required",
+    "type": "TEXT",
+    "not_null": false,
+    "unit": "",
+    "description_pt": "Necessita de estudo complementar (Sim ou Não)",
+    "description_en": "Complementary study required (Sim or Não)"
+   },
+   {
+    "name": "investment_kind",
+    "type": "TEXT",
+    "not_null": true,
+    "unit": "",
+    "description_pt": "Natureza do investimento: recommended (infraestrutura recomendada), potential (infraestrutura potencial) ou alternatives (estudo de alternativas, IREA)",
+    "description_en": "Investment nature: recommended, potential or alternatives (alternatives study, IREA)"
+   },
+   {
+    "name": "investment_million_brl",
+    "type": "REAL",
+    "not_null": false,
+    "unit": "million BRL",
+    "description_pt": "Investimento da proposta (uma vez, não por município)",
+    "description_en": "Proposal investment (once, not per municipality)"
+   }
+  ],
+  "primary_key": [
+   "proposal_id"
+  ],
+  "foreign_keys": [],
+  "checks": [
+   "investment_kind IN ('recommended','potential','alternatives')"
+  ],
+  "uniques": [],
+  "geometry": null
+ },
+ {
+  "name": "proposals_municipios",
+  "kind": "table",
+  "description_pt": "Municípios atendidos por cada proposta",
+  "description_en": "Municipalities served by each proposal",
+  "columns": [
+   {
+    "name": "proposal_id",
+    "type": "INTEGER",
+    "not_null": true,
+    "unit": "",
+    "description_pt": "Proposta",
+    "description_en": "Proposal"
+   },
+   {
+    "name": "municipio_code",
+    "type": "TEXT",
+    "not_null": true,
+    "unit": "",
+    "description_pt": "Código IBGE do município (7 dígitos)",
+    "description_en": "IBGE municipality code (7 digits)"
+   }
+  ],
+  "primary_key": [
+   "proposal_id",
+   "municipio_code"
+  ],
+  "foreign_keys": [
+   {
+    "columns": [
+     "proposal_id"
+    ],
+    "ref_table": "proposals",
+    "ref_columns": [
+     "proposal_id"
+    ]
+   },
+   {
+    "columns": [
+     "municipio_code"
+    ],
+    "ref_table": "municipios_attributes",
+    "ref_columns": [
+     "municipio_code"
+    ]
+   }
+  ],
+  "checks": [],
+  "uniques": [],
+  "geometry": null
+ },
+ {
+  "name": "systems",
+  "kind": "table",
+  "description_pt": "Sistemas de abastecimento (identidade = nome + municípios que o compartilham)",
+  "description_en": "Supply systems (identity = name + the municipalities that share it)",
+  "columns": [
+   {
+    "name": "system_id",
+    "type": "INTEGER",
+    "not_null": true,
+    "unit": "",
+    "description_pt": "Identificador do sistema (sequencial)",
+    "description_en": "System identifier (sequential)"
+   },
+   {
+    "name": "system_name",
+    "type": "TEXT",
+    "not_null": true,
+    "unit": "",
+    "description_pt": "Nome do sistema",
+    "description_en": "System name"
+   },
+   {
+    "name": "system_type",
+    "type": "TEXT",
+    "not_null": false,
+    "unit": "",
+    "description_pt": "Tipo de sistema: Isolado ou Integrado",
+    "description_en": "System type: Isolado or Integrado"
+   }
+  ],
+  "primary_key": [
+   "system_id"
+  ],
+  "foreign_keys": [],
+  "checks": [
+   "system_type IN ('Isolado','Integrado')"
+  ],
+  "uniques": [],
+  "geometry": null
+ },
+ {
+  "name": "systems_supply",
+  "kind": "table",
+  "description_pt": "Percentual da população urbana do município atendido por cada sistema e manancial (soma 100 por município)",
+  "description_en": "Share of the municipality urban population served by each system and source (sums to 100 per municipality)",
+  "columns": [
+   {
+    "name": "supply_id",
+    "type": "INTEGER",
+    "not_null": true,
+    "unit": "",
+    "description_pt": "Identificador da linha (sequencial)",
+    "description_en": "Row identifier (sequential)"
+   },
+   {
+    "name": "system_id",
+    "type": "INTEGER",
+    "not_null": true,
+    "unit": "",
+    "description_pt": "Sistema",
+    "description_en": "System"
+   },
+   {
+    "name": "municipio_code",
+    "type": "TEXT",
+    "not_null": true,
+    "unit": "",
+    "description_pt": "Código IBGE do município (7 dígitos)",
+    "description_en": "IBGE municipality code (7 digits)"
+   },
+   {
+    "name": "source_name",
+    "type": "TEXT",
+    "not_null": false,
+    "unit": "",
+    "description_pt": "Nome do manancial",
+    "description_en": "Water source name"
+   },
+   {
+    "name": "intake_type",
+    "type": "TEXT",
+    "not_null": false,
+    "unit": "",
+    "description_pt": "Tipo de captação (Superficial ou Subterrânea)",
+    "description_en": "Intake type (Superficial or Subterrânea)"
+   },
+   {
+    "name": "covered_percent",
+    "type": "REAL",
+    "not_null": true,
+    "unit": "%",
+    "description_pt": "Percentual da população urbana do município atendido por esta linha",
+    "description_en": "Share of the municipality urban population served by this row"
+   }
+  ],
+  "primary_key": [
+   "supply_id"
+  ],
+  "foreign_keys": [
+   {
+    "columns": [
+     "system_id"
+    ],
+    "ref_table": "systems",
+    "ref_columns": [
+     "system_id"
+    ]
+   },
+   {
+    "columns": [
+     "municipio_code"
+    ],
+    "ref_table": "municipios_attributes",
+    "ref_columns": [
+     "municipio_code"
+    ]
+   }
+  ],
+  "checks": [
+   "covered_percent BETWEEN 0 AND 100",
+   "intake_type IN ('Superficial','Subterrânea')"
+  ],
+  "uniques": [],
+  "geometry": null
+ },
+ {
+  "name": "intakes_attributes",
+  "kind": "table",
+  "description_pt": "Atributos dos pontos de captação de água (a geometria está em intakes)",
+  "description_en": "Water intake point attributes (geometry is in intakes)",
+  "columns": [
+   {
+    "name": "intake_code",
+    "type": "TEXT",
+    "not_null": true,
+    "unit": "",
+    "description_pt": "Código do ponto de captação: IN + latitude (+90) e longitude (+180) em unidades de 0,0001 grau (7 + 7 dígitos) + ordinal de 3 dígitos",
+    "description_en": "Intake point code: IN + latitude (+90) and longitude (+180) in 0.0001 degree units (7 + 7 digits) + 3-digit ordinal"
+   },
+   {
+    "name": "intake_name",
+    "type": "TEXT",
+    "not_null": false,
+    "unit": "",
+    "description_pt": "Nome da captação",
+    "description_en": "Intake name"
+   },
+   {
+    "name": "intake_tradename",
+    "type": "TEXT",
+    "not_null": false,
+    "unit": "",
+    "description_pt": "Nome fantasia da captação",
+    "description_en": "Intake trade name"
+   },
+   {
+    "name": "intake_type",
+    "type": "TEXT",
+    "not_null": true,
+    "unit": "",
+    "description_pt": "Tipo de captação (Superficial ou Subterrânea)",
+    "description_en": "Intake type (Superficial or Subterrânea)"
+   },
+   {
+    "name": "intake_use_status",
+    "type": "TEXT",
+    "not_null": false,
+    "unit": "",
+    "description_pt": "Situação de uso da captação",
+    "description_en": "Intake use status"
+   },
+   {
+    "name": "treatment_type",
+    "type": "TEXT",
+    "not_null": false,
+    "unit": "",
+    "description_pt": "Tipo de tratamento",
+    "description_en": "Treatment type"
+   },
+   {
+    "name": "waterbody_code",
+    "type": "TEXT",
+    "not_null": false,
+    "unit": "",
+    "description_pt": "Código da massa d'água",
+    "description_en": "Water body code"
+   },
+   {
+    "name": "waterbody_name",
+    "type": "TEXT",
+    "not_null": false,
+    "unit": "",
+    "description_pt": "Nome da massa d'água",
+    "description_en": "Water body name"
+   },
+   {
+    "name": "location_method",
+    "type": "TEXT",
+    "not_null": false,
+    "unit": "",
+    "description_pt": "Origem da geometria (coordenadas do operador, com qualificação posterior, ou aproximada pela sede municipal)",
+    "description_en": "Origin of the geometry (operator coordinates, with later qualification, or approximated by the municipality seat)"
+   }
+  ],
+  "primary_key": [
+   "intake_code"
+  ],
+  "foreign_keys": [],
+  "checks": [
+   "intake_type IN ('Superficial','Subterrânea')"
+  ],
+  "uniques": [],
+  "geometry": null
+ },
+ {
+  "name": "intakes_systems",
+  "kind": "table",
+  "description_pt": "Sistemas abastecidos por cada captação (resolvidos por nome e municípios)",
+  "description_en": "Systems supplied by each intake (resolved by name and municipalities)",
+  "columns": [
+   {
+    "name": "intake_code",
+    "type": "TEXT",
+    "not_null": true,
+    "unit": "",
+    "description_pt": "Captação",
+    "description_en": "Intake"
+   },
+   {
+    "name": "system_id",
+    "type": "INTEGER",
+    "not_null": true,
+    "unit": "",
+    "description_pt": "Sistema",
+    "description_en": "System"
+   }
+  ],
+  "primary_key": [
+   "intake_code",
+   "system_id"
+  ],
+  "foreign_keys": [
+   {
+    "columns": [
+     "intake_code"
+    ],
+    "ref_table": "intakes_attributes",
+    "ref_columns": [
+     "intake_code"
+    ]
+   },
+   {
+    "columns": [
+     "system_id"
+    ],
+    "ref_table": "systems",
+    "ref_columns": [
+     "system_id"
+    ]
+   }
+  ],
+  "checks": [],
+  "uniques": [],
+  "geometry": null
+ },
+ {
+  "name": "intakes_municipios",
+  "kind": "table",
+  "description_pt": "Municípios abastecidos por cada captação, segundo o próprio cadastro da captação (ligação direta captação -> município, sem passar pelo sistema; não é a localização do ponto)",
+  "description_en": "Municipalities supplied by each intake, from the intake's own record (direct intake -> municipality link, not through the system; not the point location)",
+  "columns": [
+   {
+    "name": "intake_code",
+    "type": "TEXT",
+    "not_null": true,
+    "unit": "",
+    "description_pt": "Captação",
+    "description_en": "Intake"
+   },
+   {
+    "name": "municipio_code",
+    "type": "TEXT",
+    "not_null": true,
+    "unit": "",
+    "description_pt": "Município (IBGE, 7 dígitos)",
+    "description_en": "Municipality (IBGE, 7 digits)"
+   },
+   {
+    "name": "match_method",
+    "type": "TEXT",
+    "not_null": true,
+    "unit": "",
+    "description_pt": "Como o nome do município foi resolvido: exact (nome + UF), alias (nome antigo/renomeado, tabela no config), prefix (nome truncado na fonte; candidato único ou o que contém o ponto)",
+    "description_en": "How the municipality name was resolved: exact (name + state), alias (old/renamed name, table in the config), prefix (name cut at the source; single candidate or the one containing the point)"
+   }
+  ],
+  "primary_key": [
+   "intake_code",
+   "municipio_code"
+  ],
+  "foreign_keys": [
+   {
+    "columns": [
+     "intake_code"
+    ],
+    "ref_table": "intakes_attributes",
+    "ref_columns": [
+     "intake_code"
+    ]
+   },
+   {
+    "columns": [
+     "municipio_code"
+    ],
+    "ref_table": "municipios_attributes",
+    "ref_columns": [
+     "municipio_code"
+    ]
+   }
+  ],
+  "checks": [
+   "match_method IN ('exact','alias','prefix')"
+  ],
+  "uniques": [],
+  "geometry": null
+ },
+ {
+  "name": "aqueducts_attributes",
+  "kind": "table",
+  "description_pt": "Atributos das adutoras e canais (a geometria está em aqueducts)",
+  "description_en": "Aqueduct and canal attributes (geometry is in aqueducts)",
+  "columns": [
+   {
+    "name": "aqueduct_id",
+    "type": "INTEGER",
+    "not_null": true,
+    "unit": "",
+    "description_pt": "Identificador do trecho",
+    "description_en": "Segment identifier"
+   },
+   {
+    "name": "aqueduct_status",
+    "type": "TEXT",
+    "not_null": false,
+    "unit": "",
+    "description_pt": "Situação",
+    "description_en": "Status"
+   },
+   {
+    "name": "aqueduct_name",
+    "type": "TEXT",
+    "not_null": false,
+    "unit": "",
+    "description_pt": "Nome do sistema adutor",
+    "description_en": "Aqueduct system name"
+   },
+   {
+    "name": "aqueduct_branch",
+    "type": "TEXT",
+    "not_null": false,
+    "unit": "",
+    "description_pt": "Ramal",
+    "description_en": "Branch"
+   },
+   {
+    "name": "unidade_alias",
+    "type": "TEXT",
+    "not_null": false,
+    "unit": "",
+    "description_pt": "Sigla da unidade da federação",
+    "description_en": "State abbreviation"
+   },
+   {
+    "name": "aqueduct_type",
+    "type": "TEXT",
+    "not_null": false,
+    "unit": "",
+    "description_pt": "Tipologia de infraestrutura",
+    "description_en": "Infrastructure type"
+   },
+   {
+    "name": "aqueduct_purpose",
+    "type": "TEXT",
+    "not_null": false,
+    "unit": "",
+    "description_pt": "Finalidade (adutora ou canal)",
+    "description_en": "Purpose (aqueduct or canal)"
+   }
+  ],
+  "primary_key": [
+   "aqueduct_id"
+  ],
+  "foreign_keys": [],
+  "checks": [],
+  "uniques": [],
+  "geometry": null
+ },
+ {
+  "name": "catchments_attributes",
+  "kind": "table",
+  "description_pt": "Atributos das bacias de contribuição das captações (a geometria está em catchments)",
+  "description_en": "Catchment attributes of the intakes (geometry is in catchments)",
+  "columns": [
+   {
+    "name": "intake_code",
+    "type": "TEXT",
+    "not_null": true,
+    "unit": "",
+    "description_pt": "Captação",
+    "description_en": "Intake"
+   },
+   {
+    "name": "catchment_source",
+    "type": "TEXT",
+    "not_null": false,
+    "unit": "",
+    "description_pt": "Método de delimitação da bacia: raster_refined, raster_refined_disconnected_vector_dropped, raster_refined_low_overlap_vector_dropped, vector_upper, vector_upper_forced (delimitação automática, HydroBASINS + MDE); manual_replaced (polígono substituído manualmente); <método>_manual_edits (delimitado pelo método e depois editado manualmente)",
+    "description_en": "Catchment delineation method: raster_refined, raster_refined_disconnected_vector_dropped, raster_refined_low_overlap_vector_dropped, vector_upper, vector_upper_forced (automatic delineation, HydroBASINS + DEM); manual_replaced (polygon replaced by hand); <method>_manual_edits (delineated by the method, then edited by hand)"
+   },
+   {
+    "name": "catchment_area_km2",
+    "type": "REAL",
+    "not_null": false,
+    "unit": "km2",
+    "description_pt": "Área da bacia de contribuição (geodésica, elipsoide WGS84)",
+    "description_en": "Catchment area (geodesic, WGS84 ellipsoid)"
+   },
+   {
+    "name": "n_parts",
+    "type": "INTEGER",
+    "not_null": true,
+    "unit": "",
+    "description_pt": "Número de polígonos da bacia (> 1: bacia fragmentada, em partes desconexas)",
+    "description_en": "Number of polygons of the catchment (> 1: fragmented catchment, in disconnected parts)"
+   }
+  ],
+  "primary_key": [
+   "intake_code"
+  ],
+  "foreign_keys": [
+   {
+    "columns": [
+     "intake_code"
+    ],
+    "ref_table": "intakes_attributes",
+    "ref_columns": [
+     "intake_code"
+    ]
+   }
+  ],
+  "checks": [
+   "n_parts >= 1"
+  ],
+  "uniques": [],
+  "geometry": null
+ },
+ {
+  "name": "provisioning_areas_attributes",
+  "kind": "table",
+  "description_pt": "Atributos das áreas de provisão por município (geometria em provisioning_areas): composição das fontes e descrição do dissolve das bacias das captações que abastecem o município (estado na edição 2021 do Atlas Águas)",
+  "description_en": "Provisioning area attributes per municipality (geometry in provisioning_areas): source mix and description of the dissolve of the catchments of the intakes supplying the municipality (state as of the Atlas Águas 2021 edition)",
+  "columns": [
+   {
+    "name": "municipio_code",
+    "type": "TEXT",
+    "not_null": true,
+    "unit": "",
+    "description_pt": "Município (IBGE, 7 dígitos)",
+    "description_en": "Municipality (IBGE, 7 digits)"
+   },
+   {
+    "name": "source_mix",
+    "type": "TEXT",
+    "not_null": true,
+    "unit": "",
+    "description_pt": "Tipos de captação ligados ao município (provisioning_links) (surface, surface_groundwater, groundwater); no_intake = há sistema mas nenhuma captação ligada; no_system = sem sistema no Atlas. Explica geometria nula",
+    "description_en": "Intake types linked to the municipality (provisioning_links) (surface, surface_groundwater, groundwater); no_intake = system(s) but no linked intake; no_system = no system in the Atlas. Explains a null geometry"
+   },
+   {
+    "name": "n_intakes_surface",
+    "type": "INTEGER",
+    "not_null": true,
+    "unit": "",
+    "description_pt": "Captações superficiais ligadas (= bacias dissolvidas)",
+    "description_en": "Linked surface intakes (= dissolved catchments)"
+   },
+   {
+    "name": "n_intakes_groundwater",
+    "type": "INTEGER",
+    "not_null": true,
+    "unit": "",
+    "description_pt": "Captações subterrâneas ligadas (sem bacia)",
+    "description_en": "Linked groundwater intakes (no catchment)"
+   },
+   {
+    "name": "n_intakes_system_only",
+    "type": "INTEGER",
+    "not_null": true,
+    "unit": "",
+    "description_pt": "Captações ligadas só via sistema (ausentes do cadastro de municípios da captação; típico de sistemas integrados)",
+    "description_en": "Intakes linked only through the system (absent from the intake's own municipality list; typical of integrated systems)"
+   },
+   {
+    "name": "n_parts",
+    "type": "INTEGER",
+    "not_null": false,
+    "unit": "",
+    "description_pt": "Número de partes do polígono dissolvido (> 1: bacias disjuntas e remotas)",
+    "description_en": "Number of parts of the dissolved polygon (> 1: disjoint, remote catchments)"
+   },
+   {
+    "name": "area_km2",
+    "type": "REAL",
+    "not_null": false,
+    "unit": "km2",
+    "description_pt": "Área da área de provisão (dissolve, sem dupla contagem de bacias aninhadas)",
+    "description_en": "Provisioning area (dissolve, nested catchments not double counted)"
+   },
+   {
+    "name": "topology",
+    "type": "TEXT",
+    "not_null": false,
+    "unit": "",
+    "description_pt": "Topologia das bacias: S única; M-N múltiplas aninhadas (ligadas por aninhamento); M-D múltiplas disjuntas; M-X mistas",
+    "description_en": "Catchment topology: S single; M-N multiple nested (connected by nesting); M-D multiple disjoint; M-X mixed"
+   }
+  ],
+  "primary_key": [
+   "municipio_code"
+  ],
+  "foreign_keys": [
+   {
+    "columns": [
+     "municipio_code"
+    ],
+    "ref_table": "municipios_attributes",
+    "ref_columns": [
+     "municipio_code"
+    ]
+   }
+  ],
+  "checks": [
+   "source_mix IN ('surface','surface_groundwater','groundwater','no_intake','no_system')",
+   "topology IN ('S','M-N','M-D','M-X')",
+   "(n_intakes_surface > 0) = (area_km2 IS NOT NULL)"
+  ],
+  "uniques": [],
+  "geometry": null
+ },
+ {
+  "name": "municipios",
+  "kind": "spatial",
+  "description_pt": "Limites municipais (polígonos); atributos em municipios_attributes",
+  "description_en": "Municipality boundaries (polygons); attributes in municipios_attributes",
+  "columns": [
+   {
+    "name": "municipio_code",
+    "type": "TEXT",
+    "not_null": true,
+    "unit": "",
+    "description_pt": "Código IBGE do município (7 dígitos)",
+    "description_en": "IBGE municipality code (7 digits)"
+   }
+  ],
+  "primary_key": [
+   "municipio_code"
+  ],
+  "foreign_keys": [
+   {
+    "columns": [
+     "municipio_code"
+    ],
+    "ref_table": "municipios_attributes",
+    "ref_columns": [
+     "municipio_code"
+    ]
+   }
+  ],
+  "checks": [],
+  "uniques": [],
+  "geometry": {
+   "column": "geom",
+   "type": "MultiPolygon"
+  }
+ },
+ {
+  "name": "municipios_sedes",
+  "kind": "spatial",
+  "description_pt": "Sedes municipais (pontos); atributos em municipios_attributes",
+  "description_en": "Municipality seats (points); attributes in municipios_attributes",
+  "columns": [
+   {
+    "name": "municipio_code",
+    "type": "TEXT",
+    "not_null": true,
+    "unit": "",
+    "description_pt": "Código IBGE do município (7 dígitos)",
+    "description_en": "IBGE municipality code (7 digits)"
+   }
+  ],
+  "primary_key": [
+   "municipio_code"
+  ],
+  "foreign_keys": [
+   {
+    "columns": [
+     "municipio_code"
+    ],
+    "ref_table": "municipios_attributes",
+    "ref_columns": [
+     "municipio_code"
+    ]
+   }
+  ],
+  "checks": [],
+  "uniques": [],
+  "geometry": {
+   "column": "geom",
+   "type": "Point"
+  }
+ },
+ {
+  "name": "intakes",
+  "kind": "spatial",
+  "description_pt": "Pontos de captação (pontos); atributos em intakes_attributes",
+  "description_en": "Intake points; attributes in intakes_attributes",
+  "columns": [
+   {
+    "name": "intake_code",
+    "type": "TEXT",
+    "not_null": true,
+    "unit": "",
+    "description_pt": "Captação",
+    "description_en": "Intake"
+   }
+  ],
+  "primary_key": [
+   "intake_code"
+  ],
+  "foreign_keys": [
+   {
+    "columns": [
+     "intake_code"
+    ],
+    "ref_table": "intakes_attributes",
+    "ref_columns": [
+     "intake_code"
+    ]
+   }
+  ],
+  "checks": [],
+  "uniques": [],
+  "geometry": {
+   "column": "geom",
+   "type": "MultiPoint"
+  }
+ },
+ {
+  "name": "aqueducts",
+  "kind": "spatial",
+  "description_pt": "Trechos de adutoras e canais (linhas); atributos em aqueducts_attributes",
+  "description_en": "Aqueduct and canal segments (lines); attributes in aqueducts_attributes",
+  "columns": [
+   {
+    "name": "aqueduct_id",
+    "type": "INTEGER",
+    "not_null": true,
+    "unit": "",
+    "description_pt": "Identificador do trecho",
+    "description_en": "Segment identifier"
+   }
+  ],
+  "primary_key": [
+   "aqueduct_id"
+  ],
+  "foreign_keys": [
+   {
+    "columns": [
+     "aqueduct_id"
+    ],
+    "ref_table": "aqueducts_attributes",
+    "ref_columns": [
+     "aqueduct_id"
+    ]
+   }
+  ],
+  "checks": [],
+  "uniques": [],
+  "geometry": {
+   "column": "geom",
+   "type": "MultiLineString"
+  }
+ },
+ {
+  "name": "catchments",
+  "kind": "spatial",
+  "description_pt": "Bacias de contribuição das captações (polígonos); atributos em catchments_attributes",
+  "description_en": "Catchment polygons of the intakes; attributes in catchments_attributes",
+  "columns": [
+   {
+    "name": "intake_code",
+    "type": "TEXT",
+    "not_null": true,
+    "unit": "",
+    "description_pt": "Captação",
+    "description_en": "Intake"
+   }
+  ],
+  "primary_key": [
+   "intake_code"
+  ],
+  "foreign_keys": [
+   {
+    "columns": [
+     "intake_code"
+    ],
+    "ref_table": "catchments_attributes",
+    "ref_columns": [
+     "intake_code"
+    ]
+   }
+  ],
+  "checks": [],
+  "uniques": [],
+  "geometry": {
+   "column": "geom",
+   "type": "MultiPolygon"
+  }
+ },
+ {
+  "name": "provisioning_areas",
+  "kind": "spatial",
+  "description_pt": "Áreas de provisão: dissolve das bacias de todas as captações que abastecem o município (provisioning_links: ligação direta da captação ou via sistema; nunca por interseção espacial). Uma linha por município, geometria nula sem captação superficial; áreas de municípios que compartilham captações se sobrepõem (não somar)",
+  "description_en": "Provisioning areas: dissolve of the catchments of all intakes supplying the municipality (provisioning_links: direct intake link or through the system; never by spatial intersection). One row per municipality, null geometry without surface intake; areas of municipalities sharing intakes overlap (do not sum)",
+  "columns": [
+   {
+    "name": "municipio_code",
+    "type": "TEXT",
+    "not_null": true,
+    "unit": "",
+    "description_pt": "Município (IBGE, 7 dígitos)",
+    "description_en": "Municipality (IBGE, 7 digits)"
+   }
+  ],
+  "primary_key": [
+   "municipio_code"
+  ],
+  "foreign_keys": [
+   {
+    "columns": [
+     "municipio_code"
+    ],
+    "ref_table": "provisioning_areas_attributes",
+    "ref_columns": [
+     "municipio_code"
+    ]
+   }
+  ],
+  "checks": [],
+  "uniques": [],
+  "geometry": {
+   "column": "geom",
+   "type": "MultiPolygon"
+  }
+ },
+ {
+  "name": "systems_supply_population",
+  "kind": "view",
+  "description_pt": "População urbana atribuída (e coberta) por sistema e município, calculada de systems_supply e municipios_indicators (não armazenada)",
+  "description_en": "Urban population assigned (and covered) by system and municipality, computed from systems_supply and municipios_indicators (not stored)",
+  "columns": [
+   {
+    "name": "supply_id",
+    "type": "INTEGER",
+    "not_null": false,
+    "unit": "",
+    "description_pt": "Linha de systems_supply",
+    "description_en": "systems_supply row"
+   },
+   {
+    "name": "system_id",
+    "type": "INTEGER",
+    "not_null": false,
+    "unit": "",
+    "description_pt": "Sistema",
+    "description_en": "System"
+   },
+   {
+    "name": "municipio_code",
+    "type": "TEXT",
+    "not_null": false,
+    "unit": "",
+    "description_pt": "Município",
+    "description_en": "Municipality"
+   },
+   {
+    "name": "assigned_population_urban_2020",
+    "type": "REAL",
+    "not_null": false,
+    "unit": "inhabitants",
+    "description_pt": "População urbana de 2020 do município atribuída a esta linha (população x percentual / 100)",
+    "description_en": "2020 urban population of the municipality assigned to this row (population x share / 100)"
+   },
+   {
+    "name": "assigned_population_urban_2035",
+    "type": "REAL",
+    "not_null": false,
+    "unit": "inhabitants",
+    "description_pt": "População urbana projetada para 2035 atribuída a esta linha",
+    "description_en": "Projected 2035 urban population assigned to this row"
+   },
+   {
+    "name": "covered_population_urban_2020",
+    "type": "REAL",
+    "not_null": false,
+    "unit": "inhabitants",
+    "description_pt": "População atribuída em 2020 efetivamente coberta pelo abastecimento (atribuída x cobertura / 100); vazio onde a cobertura não foi informada",
+    "description_en": "Assigned 2020 population actually covered by supply (assigned x coverage / 100); empty where coverage is not reported"
+   }
+  ],
+  "primary_key": [],
+  "foreign_keys": [],
+  "checks": [],
+  "uniques": [],
+  "geometry": null,
+  "sql": "SELECT s.supply_id, s.system_id, s.municipio_code,\n p20.population_urban * s.covered_percent / 100.0 AS assigned_population_urban_2020,\n p35.population_urban * s.covered_percent / 100.0 AS assigned_population_urban_2035,\n p20.population_urban * s.covered_percent / 100.0 * p20.supply_coverage / 100.0 AS covered_population_urban_2020\nFROM systems_supply s\nLEFT JOIN municipios_indicators p20 ON p20.municipio_code = s.municipio_code AND p20.year = 2020\nLEFT JOIN municipios_indicators p35 ON p35.municipio_code = s.municipio_code AND p35.year = 2035"
+ },
+ {
+  "name": "provisioning_links",
+  "kind": "view",
+  "description_pt": "Ligações captação -> município usadas nas áreas de provisão: diretas (intakes_municipios) e via sistema (intakes_systems + systems_supply com covered_percent > 0); calculada, não armazenada",
+  "description_en": "Intake -> municipality links used for the provisioning areas: direct (intakes_municipios) and through the system (intakes_systems + systems_supply with covered_percent > 0); computed, not stored",
+  "columns": [
+   {
+    "name": "intake_code",
+    "type": "TEXT",
+    "not_null": false,
+    "unit": "",
+    "description_pt": "Captação",
+    "description_en": "Intake"
+   },
+   {
+    "name": "municipio_code",
+    "type": "TEXT",
+    "not_null": false,
+    "unit": "",
+    "description_pt": "Município (IBGE, 7 dígitos)",
+    "description_en": "Municipality (IBGE, 7 digits)"
+   },
+   {
+    "name": "link_source",
+    "type": "TEXT",
+    "not_null": false,
+    "unit": "",
+    "description_pt": "direct, system ou both",
+    "description_en": "direct, system or both"
+   }
+  ],
+  "primary_key": [],
+  "foreign_keys": [],
+  "checks": [],
+  "uniques": [],
+  "geometry": null,
+  "sql": "SELECT intake_code, municipio_code,\n CASE WHEN MAX(d) = 1 AND MAX(s) = 1 THEN 'both' WHEN MAX(d) = 1 THEN 'direct' ELSE 'system' END AS link_source\nFROM (SELECT intake_code, municipio_code, 1 AS d, 0 AS s FROM intakes_municipios\n UNION ALL\n SELECT x.intake_code, ss.municipio_code, 0, 1 FROM intakes_systems x JOIN systems_supply ss ON ss.system_id = x.system_id WHERE ss.covered_percent > 0)\nGROUP BY intake_code, municipio_code"
+ }
+]

@@ -1,0 +1,149 @@
+{
+ "input_folder": "/path/to/folder",
+ "output_gpkg": "/path/to/folder/ANA_ATLASAGUAS_DB_BRAZIL_2021.gpkg",
+ "report_folder": "/path/to/folder",
+ "catalog_layers": "ANA_ATLAS-AGUAS_LAYERS_X_X.csv",
+ "schema": "build_database_schema.json",
+ "provisioning": {
+  "area_crs": "ESRI:102033",
+  "nested_threshold": 0.5,
+  "clean_tolerance": 0.01
+ },
+ "municipio_aliases": [
+  {
+   "name": "Amparo de São Francisco",
+   "unidade_alias": "SE",
+   "to": "Amparo do São Francisco"
+  },
+  {
+   "name": "Augusto Severo",
+   "unidade_alias": "RN",
+   "to": "Campo Grande"
+  },
+  {
+   "name": "Belém de São Francisco",
+   "unidade_alias": "PE",
+   "to": "Belém do São Francisco"
+  },
+  {
+   "name": "Brasópolis",
+   "unidade_alias": "MG",
+   "to": "Brazópolis"
+  },
+  {
+   "name": "Campo de Santana",
+   "unidade_alias": "PB",
+   "to": "Tacima"
+  },
+  {
+   "name": "Dona Eusébia",
+   "unidade_alias": "MG",
+   "to": "Dona Euzébia"
+  },
+  {
+   "name": "Eldorado dos Carajás",
+   "unidade_alias": "PA",
+   "to": "Eldorado do Carajás"
+  },
+  {
+   "name": "Embu",
+   "unidade_alias": "SP",
+   "to": "Embu das Artes"
+  },
+  {
+   "name": "Florínia",
+   "unidade_alias": "SP",
+   "to": "Florínea"
+  },
+  {
+   "name": "Fortaleza do Tabocão",
+   "unidade_alias": "TO",
+   "to": "Tabocão"
+  },
+  {
+   "name": "Iguaraci",
+   "unidade_alias": "PE",
+   "to": "Iguaracy"
+  },
+  {
+   "name": "Itapagé",
+   "unidade_alias": "CE",
+   "to": "Itapajé"
+  },
+  {
+   "name": "Lagoa do Itaenga",
+   "unidade_alias": "PE",
+   "to": "Lagoa de Itaenga"
+  },
+  {
+   "name": "Moji Mirim",
+   "unidade_alias": "SP",
+   "to": "Mogi Mirim"
+  },
+  {
+   "name": "Muquém de São Francisco",
+   "unidade_alias": "BA",
+   "to": "Muquém do São Francisco"
+  },
+  {
+   "name": "Parati",
+   "unidade_alias": "RJ",
+   "to": "Paraty"
+  },
+  {
+   "name": "Poxoréo",
+   "unidade_alias": "MT",
+   "to": "Poxoréu"
+  },
+  {
+   "name": "Santa Isabel do Pará",
+   "unidade_alias": "PA",
+   "to": "Santa Izabel do Pará"
+  },
+  {
+   "name": "Santa Teresinha",
+   "unidade_alias": "BA",
+   "to": "Santa Terezinha"
+  },
+  {
+   "name": "Santarém",
+   "unidade_alias": "PB",
+   "to": "Joca Claudino"
+  },
+  {
+   "name": "Santo Antônio do Leverger",
+   "unidade_alias": "MT",
+   "to": "Santo Antônio de Leverger"
+  },
+  {
+   "name": "Seridó",
+   "unidade_alias": "PB",
+   "to": "São Vicente do Seridó"
+  },
+  {
+   "name": "São Luís do Paraitinga",
+   "unidade_alias": "SP",
+   "to": "São Luiz do Paraitinga"
+  },
+  {
+   "name": "São Thomé das Letras",
+   "unidade_alias": "MG",
+   "to": "São Tomé das Letras"
+  },
+  {
+   "name": "São Valério da Natividade",
+   "unidade_alias": "TO",
+   "to": "São Valério"
+  },
+  {
+   "name": "Trajano de Morais",
+   "unidade_alias": "RJ",
+   "to": "Trajano de Moraes"
+  },
+  {
+   "name": "Vila Alta",
+   "unidade_alias": "PR",
+   "to": "Alto Paraíso"
+  }
+ ]
+}

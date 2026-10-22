@@ -1,0 +1,89 @@
+{
+ "gpkg": "/path/to/folder/ANA_ATLASAGUAS_DB_BRAZIL_2021.gpkg",
+ "sql": "../queries/municipio_population_provisioning.sql",
+ "output": "/path/to/folder/municipio_provisioning_dispersion.jpg",
+ "x": "provisioning_area_km2",
+ "y": "covered_surface_population_2020",
+ "category": "regiao_name",
+ "category_order": [
+  "Norte",
+  "Nordeste",
+  "Sudeste",
+  "Sul",
+  "Centro-Oeste"
+ ],
+ "colors": [
+  "#2a78d6",
+  "#eb6834",
+  "#1baf7a",
+  "#eda100",
+  "#e87ba4"
+ ],
+ "legend_loc": "lower left",
+ "x_label": "Provisioning area (km², dissolved catchments of the municipality's intakes)",
+ "y_label": "Covered urban population supplied by surface water, 2020 (inhabitants)",
+ "title": "Covered surface-water population vs provisioning area, by municipality",
+ "subtitle": "One dot per municipality ({n}). Population = urban x surface share x coverage. {dropped} left out: no surface share, or coverage zero or not reported.",
+ "ratio_column": "covered_surface_population_per_km2",
+ "label_column": "municipio_label",
+ "hover": [
+  [
+   "regiao_name",
+   "region",
+   "{}"
+  ],
+  [
+   "covered_surface_population_2020",
+   "covered surface population 2020",
+   "{:,.0f}"
+  ],
+  [
+   "provisioning_area_km2",
+   "provisioning area (km²)",
+   "{:,.1f}"
+  ],
+  [
+   "covered_surface_population_per_km2",
+   "density (/km²)",
+   "{:,.2f}"
+  ],
+  [
+   "surface_percent",
+   "surface share (%)",
+   "{:.1f}"
+  ],
+  [
+   "supply_coverage_2020",
+   "supply coverage (%)",
+   "{:.1f}"
+  ],
+  [
+   "n_intakes_surface",
+   "surface intakes",
+   "{:.0f}"
+  ],
+  [
+   "n_parts",
+   "parts",
+   "{:.0f}"
+  ],
+  [
+   "topology",
+   "topology",
+   "{}"
+  ]
+ ],
+ "log_x": true,
+ "log_y": true,
+ "label_top": 3,
+ "dpi": 200,
+ "size_inches": [
+  6.5,
+  6.5
+ ],
+ "jpeg_quality": 92,
+ "panel_color": "#e4e3df",
+ "marker_size": 12,
+ "marker_edge": 0.3,
+ "alpha": 0.6
+}

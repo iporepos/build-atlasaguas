@@ -1,0 +1,9 @@
+{
+ "output_folder": "/path/to/SRC/ZENODO",
+ "skip": ["*_backup_*", "*.zip", "*.part", "*.part.gpkg", "*-wal", "*-shm", "*-journal"],
+ "compresslevel": 6,
+ "archives": [
+  {"zip": "T1_ANA_ATLASAGUAS_DB_BRAZIL_2021.zip", "folder": "/path/to/T1/ASSETS"},
+  {"zip": "T2_ANA_ATLASAGUAS_DB_BRAZIL_2021.zip", "folder": "/path/to/T2/ASSETS"}
+ ]
+}
