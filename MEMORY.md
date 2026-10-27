@@ -138,3 +138,49 @@ History before this repo: `Bench/MEMORY.md`, entries 2026-10-05, 2026-10-21 and 
   plots' labels worse, so it stays opt-in; national plots unchanged (pixel check).
 - y_label of the three municipio plots shortened to "Provisioning area (km²)" (user: no explanations).
 - Reference lines now solid, color REF #aaa9a4 (was dashed MUTED #8a8984).
+
+## 2026-10-27 — T2 refactor: attributes in spatial layers, provisioning_areas_within, hole filling
+- Scope exception decided by the user (new layer provisioning_areas_within; structure change). CLAUDE.md/README scope
+  text not changed: user to decide whether to reword the frozen-scope policy.
+- `*_attributes` tables removed: municipios, intakes, aqueducts, catchments, provisioning_areas carry their columns
+  (QGIS friction). FKs of plain tables now point to the spatial layers (unique index on the key). Schema: 15 tables
+  (8 plain + 7 spatial) + 2 views. geometry.nullable flag (provisioning_areas, _within); `fields.geom.not_null` follows it.
+- Spatial layers: columns cast to the schema type before pyogrio (INTEGER -> Int64, REAL, TEXT), geometry_type passed;
+  after loading, `verify_spatial` checks declared types, gpkg geometry type, NOT NULL, CHECKs (may use geom), FKs, geom
+  NOT NULL. Negative tests (share 1.5, bad FK, NULL geom, bad intake_type) all stop the build.
+- Holes: catchments have 0 holes; the dissolve had 3,666 holes in 228 areas (median width 19 m, max 5 km2, 110.75 km2
+  total) = gaps between catchments. All filled (hydrology: an enclosed area drains through its neighbours); report
+  provisioning_filled_holes.csv. Area-bounds check now on the raw dissolve; check_polygons: valid, non-empty
+  MultiPolygon, no holes (holes allowed in _within: municipal enclaves).
+- provisioning_areas_within: clip to own municipio polygon, parts < within_min_part_km2 (config, default 0.01) dropped
+  (provisioning_within_dropped_parts.csv: 1,521 parts, 3.38 km2). Columns area_km2, share (0-1), n_parts. NULL attrs
+  without WPA; NULL geom + area 0 + n_parts 0 when nothing inside. Scratch: 3,084 with geometry, 295 entirely outside
+  (Rio, Fortaleza, Niterói, São Gonçalo), median share 0.209.
+- Tested on scratch (T1 symlinked, catchments copied): every non-provisioning layer/table/view identical to the real T2
+  (values and geometry blobs); provisioning attributes identical except area_km2 (223 rows grow exactly by their holes).
+- synthesis_municipios.py: reads spatial layers without geom (columns from `fields`); + provisioning_within_area_km2,
+  _share, _n_parts (56 columns; other 53 identical except provisioning_area_km2). queries/*.sql renamed tables; both run.
+- Docs: zenodo_description.html (layout, counts 15, version log 1.1.0 extended: confirm number), README,
+  water-supply-nomenclature.md (_within is a clip, not a link; holes), plan.md references.
+- User to run: build_database.py --overwrite (real T2), then synthesis_municipios.py --overwrite and the plots. Add
+  `"within_min_part_km2": 0.01` to the local config if wanted explicit (default is 0.01).
+
+## 2026-10-27 — provisioning_areas: upstream intakes
+- User design: spatial join of intake POINTS (not catchment nesting) with the filled provisioning polygon; groundwater
+  dropped; intakes linked to the municipality (provisioning_links) dropped; all use statuses kept (as the dissolve).
+- New columns n_intakes_surface_upstream, covered_population_urban_upstream_2020 (served = covered: population x
+  share x coverage, surface rows of systems_supply of the upstream intakes' systems, other municipalities, each supply
+  row once per area; approach "c": whole system counts even if one intake is upstream). NULL without area; CHECKs tie
+  them to n_intakes_surface. Intakes without system count but add no population; rows without coverage add nothing.
+- Scratch: 1,618 of 3,379 areas with upstream intakes (max 919, Foz do Iguaçu, 48.5 M). Integrated systems inflate the
+  number (Cabreúva/Itu ~21.7 M: the RMSP integrated system counts whole) — known effect of "c", accepted by the user.
+- Verified independently for 7 municipalities from the gpkg (point-in-polygon + provisioning_links + view
+  systems_supply_population): exact match. Synthesis: 58 columns (2 new, auto). Docs updated.
+
+## 2026-10-27 — municipio_name + municipio_percent
+- provisioning_areas and provisioning_areas_within: + municipio_name (copy from municipios, after the key, NOT NULL).
+- provisioning_areas_within: + municipio_percent (0-100) = area_km2 / municipality polygon area, both ESRI:102033
+  (not the DTB area_km2; max diff vs DTB is small). Checks: BETWEEN 0 AND 100, NULL together with area_km2.
+  Scratch: median 15.3%; Porto Alegre 100%, São Paulo 15.75%, Manaus 82%.
+- `share` stays a 0-1 fraction (percent asked only for the new column): possible inconsistency to raise with the user.
+- synthesis: skips municipio_name of non-municipios layers; + provisioning_within_municipio_percent (59 columns).

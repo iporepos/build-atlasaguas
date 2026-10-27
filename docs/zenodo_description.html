@@ -3,28 +3,27 @@
 <p>&nbsp;</p>
 
 <p><strong>Harmonization</strong></p>
-<p>The original Atlas layers and spreadsheets are combined into a single relational GeoPackage (EPSG:4326). Spatial layers hold only a key and the geometry; their attributes live in linked tables with primary and foreign keys. Municipalities, intakes, aqueducts, supply systems, indicators, investments and proposals are all included. Two catalog tables, <em>tables</em> and <em>fields</em>, document every table and column in Portuguese and English, with units.</p>
+<p>The original Atlas layers and spreadsheets are combined into a single relational GeoPackage (EPSG:4326). Spatial layers carry their own attributes (no join needed in QGIS); plain tables are linked to them by primary and foreign keys. Municipalities, intakes, aqueducts, supply systems, indicators, investments and proposals are all included. Two catalog tables, <em>tables</em> and <em>fields</em>, document every table and column in Portuguese and English, with units.</p>
 
 <p><strong>Enhancement: intake catchments</strong></p>
-<p>The dataset adds the upstream catchment (contributing drainage area) of every surface-water intake point: 4,063 polygons, which are not available in the original Atlas. Each catchment was traced upstream through HydroBASINS (levels 8 and 12) and refined with the HydroSHEDS 3 arc-second DEM, with manual corrections where needed. The <em>catchments_attributes</em> table records the delineation method, the geodesic area (km²) and the number of polygon parts of each catchment. Catchments join to intakes and supply systems through <em>intake_code</em>. Catchments found to be wrong are fixed in later versions; the method value then ends in <em>manual_replaced</em> or <em>_manual_edits</em>.</p>
+<p>The dataset adds the upstream catchment (contributing drainage area) of every surface-water intake point: 4,063 polygons, which are not available in the original Atlas. Each catchment was traced upstream through HydroBASINS (levels 8 and 12) and refined with the HydroSHEDS 3 arc-second DEM, with manual corrections where needed. The <em>catchments</em> layer records the delineation method, the geodesic area (km²) and the number of polygon parts of each catchment. Catchments join to intakes and supply systems through <em>intake_code</em>. Catchments found to be wrong are fixed in later versions; the method value then ends in <em>manual_replaced</em> or <em>_manual_edits</em>.</p>
 
 <p><strong>Files</strong></p>
 <ul>
 <li><strong>T2_ANA_ATLASAGUAS_DB_BRAZIL_2021.zip</strong>: the database, <em>ANA_ATLASAGUAS_DB_BRAZIL_2021.gpkg</em>. This is the file most users need.</li>
 <li><strong>T1_ANA_ATLASAGUAS_DB_BRAZIL_2021.zip</strong>: the standardized source files the database is built from, one file per Atlas layer (CSV or GeoPackage) with a glossary CSV each (column, Portuguese and English description, unit), plus the layer catalog <em>ANA_ATLAS-AGUAS_LAYERS_X_X.csv</em>. Provided for reproducibility.</li>
-<li><strong>ANA_ATLASAGUAS_SYNTHESIS_MUNICIPIOS_BRAZIL_2021.csv</strong>: a flat table derived from the database, one row per municipality (5,572), for use without GIS software. It brings together the municipality attributes, the 2020 and 2035 indicators, the supply shares (surface and groundwater) and covered population, the provisioning area attributes, the investments and the number of proposals. Semicolon-separated, UTF-8; text values in double quotes; an empty cell means no value.</li>
+<li><strong>ANA_ATLASAGUAS_SYNTHESIS_MUNICIPIOS_BRAZIL_2021.csv</strong>: a flat table derived from the database, one row per municipality (5,572), for use without GIS software. It brings together the municipality attributes, the 2020 and 2035 indicators, the supply shares (surface and groundwater) and covered population, the provisioning area attributes (total and inside the municipality), the investments and the number of proposals. Semicolon-separated, UTF-8; text values in double quotes; an empty cell means no value.</li>
 <li><strong>ANA_ATLASAGUAS_SYNTHESIS_MUNICIPIOS_BRAZIL_2021_GLOSSARY.csv</strong>: description of every column of the synthesis table, in Portuguese and English, with units.</li>
 </ul>
 
 <p><strong>Getting Started</strong></p>
-<p>Unzip <em>T2_ANA_ATLASAGUAS_DB_BRAZIL_2021.zip</em> and open <em>ANA_ATLASAGUAS_DB_BRAZIL_2021.gpkg</em> in QGIS or any GeoPackage-aware tool (19 data tables, 2 catalog tables and 2 views).</p>
+<p>Unzip <em>T2_ANA_ATLASAGUAS_DB_BRAZIL_2021.zip</em> and open <em>ANA_ATLASAGUAS_DB_BRAZIL_2021.gpkg</em> in QGIS or any GeoPackage-aware tool (15 data tables, 2 catalog tables and 2 views).</p>
 <p><strong>Start with the metadata.</strong> The <em>tables</em> catalog lists every table with its kind, row count and description; the <em>fields</em> catalog describes every column (type, key, unit, Portuguese and English description). Use them as the guide to everything else.</p>
 <ul>
-<li><strong>Spatial layers</strong> (key + geometry): <em>municipios</em>, <em>municipios_sedes</em> (urban seats), <em>intakes</em>, <em>aqueducts</em>, <em>catchments</em> and <em>provisioning_areas</em>.</li>
-<li><strong>Attribute tables</strong>, joined by key: <em>municipios_attributes</em> (municipio_code), <em>intakes_attributes</em> and <em>catchments_attributes</em> (intake_code), <em>aqueducts_attributes</em> (aqueduct_id), <em>provisioning_areas_attributes</em> (municipio_code).</li>
+<li><strong>Spatial layers</strong>, each with its attributes: <em>municipios</em> (municipio_code), <em>municipios_sedes</em> (urban seats), <em>intakes</em> and <em>catchments</em> (intake_code), <em>aqueducts</em> (aqueduct_id), <em>provisioning_areas</em> and <em>provisioning_areas_within</em> (municipio_code).</li>
 <li><strong>Indicators and plans</strong>: <em>municipios_indicators</em> (urban population and water demand for 2020 and 2035; water security index for 2020), <em>municipios_investments</em>, <em>proposals</em> and <em>proposals_municipios</em>.</li>
 <li><strong>Supply systems</strong>: <em>systems</em>, <em>systems_supply</em> (system × municipality, with share) and <em>intakes_systems</em> (intake × system); the view <em>systems_supply_population</em> derives the population served.</li>
-<li><strong>Provisioning areas</strong>: <em>provisioning_areas</em> is, for each municipality, the union of the catchments of the intakes that supply it (linked through <em>intakes_municipios</em> and the supply systems, listed in the view <em>provisioning_links</em>); <em>provisioning_areas_attributes</em> gives the water source mix, intake counts, area and topology.</li>
+<li><strong>Provisioning areas</strong>: <em>provisioning_areas</em> is, for each municipality, the union of the catchments of the intakes that supply it (linked through <em>intakes_municipios</em> and the supply systems, listed in the view <em>provisioning_links</em>), with the water source mix, intake counts, area and topology, and the surface intakes of other municipalities inside it (upstream) with the population their systems serve; gaps between neighbouring catchments are filled. <em>provisioning_areas_within</em> is the part of each provisioning area inside the municipality's own boundary (parts under 0.01 km² dropped), with its area, its share of the provisioning area, the percent of the municipality it covers and its number of parts; its geometry is empty when the municipality is supplied entirely from outside.</li>
 </ul>
 
 <p><strong>Data Source</strong></p>
@@ -33,6 +32,6 @@
 <p>&nbsp;</p>
 
 <p><strong>Version Log</strong></p>
-<p>1.1.0 - T1 source files added (T1 zip); database renamed to the T2 zip; <em>n_parts</em> added to <em>catchments_attributes</em>; municipality synthesis table and its glossary added.</p>
+<p>1.1.0 - T1 source files added (T1 zip); database renamed to the T2 zip; <em>n_parts</em> added to the catchments; municipality synthesis table and its glossary added; attribute tables merged into their spatial layers; holes of the provisioning areas filled; upstream intakes and their served population added to the provisioning areas; <em>provisioning_areas_within</em> added.</p>
 <p>1.0.0 - Database upload</p>
 <p>0.0.0 - Deposit creation and description.</p>

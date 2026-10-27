@@ -7,15 +7,17 @@ Config keys: gpkg (T2, opened read-only), output (CSV). Optional: sep (default '
 Writes <output> and <output stem>_GLOSSARY.csv (column_name;description_pt;description_en;unit, the T1 convention;
 descriptions of copied columns come from the T2 `fields` catalog).
 Columns, in blocks:
-  municipality    municipios_attributes (area_km2 -> municipio_area_km2)
+  municipality    municipios attributes (area_km2 -> municipio_area_km2)
   indicators      municipios_indicators, wide: <column>_<year>; years and columns with no value at all are dropped
                   (ISH exists for 2020 only)
   supply          systems_supply: n_systems, n_systems_integrado, surface_percent, groundwater_percent (sums of
                   covered_percent by intake type); covered_population_urban_2020 = urban population x coverage;
                   covered_surface_population_2020 = urban population x surface share x coverage (NULL where coverage is
                   not reported)
-  provisioning    provisioning_areas_attributes (area_km2 -> provisioning_area_km2, n_parts -> provisioning_n_parts);
-                  NULL area where there is no surface intake (source_mix says why)
+  provisioning    provisioning_areas attributes (area_km2 -> provisioning_area_km2, n_parts -> provisioning_n_parts);
+                  NULL area where there is no surface intake (source_mix says why); provisioning_areas_within attributes
+                  (-> provisioning_within_area_km2, provisioning_within_share, provisioning_within_municipio_percent,
+                  provisioning_within_n_parts)
   investments     municipios_investments, wide: investment_<group>_<component>_<period>_brl, + investment_total_brl
   proposals       n_proposals, n_proposals_<kind> (counts only: a proposal's investment is stored once, not per
                   municipality, so it cannot be summed per municipality)
@@ -47,9 +49,13 @@ DERIVED = {  # column -> (description_pt, description_en, unit)
 }
 ORDER = {"distribution": 0, "replacement": 1, "network": 0, "connections": 1, "storage": 2,  # investment column order
          "until2025": 0, "2026to2030": 1, "2031to2035": 2, "until2035": 3}
-RENAME = {("municipios_attributes", "area_km2"): "municipio_area_km2",
-          ("provisioning_areas_attributes", "area_km2"): "provisioning_area_km2",
-          ("provisioning_areas_attributes", "n_parts"): "provisioning_n_parts"}
+RENAME = {("municipios", "area_km2"): "municipio_area_km2",
+          ("provisioning_areas", "area_km2"): "provisioning_area_km2",
+          ("provisioning_areas", "n_parts"): "provisioning_n_parts",
+          ("provisioning_areas_within", "area_km2"): "provisioning_within_area_km2",
+          ("provisioning_areas_within", "share"): "provisioning_within_share",
+          ("provisioning_areas_within", "municipio_percent"): "provisioning_within_municipio_percent",
+          ("provisioning_areas_within", "n_parts"): "provisioning_within_n_parts"}
 
 
 def log(m):
@@ -93,13 +99,19 @@ def main():
 
     def copy(table, df):
         for c in df.columns:
-            if c == "municipio_code" and table != "municipios_attributes":
+            if c == "municipio_code" and table != "municipios":
                 continue
             glossary[RENAME.get((table, c), c)] = fdesc[(table, c)]
         return df.rename(columns={c: RENAME.get((table, c), c) for c in df.columns})
 
+    def attributes(table):
+        """The columns of a spatial layer listed in `fields`, without the geometry (and the name, except in municipios)."""
+        skip = {"geom"} | ({"municipio_name"} if table != "municipios" else set())
+        cols = fields.column_name[(fields.table_name == table) & ~fields.column_name.isin(skip)]
+        return copy(table, read(con, f'SELECT {", ".join(cols)} FROM "{table}"'))
+
     # municipality
-    syn = copy("municipios_attributes", read(con, "SELECT * FROM municipios_attributes"))
+    syn = attributes("municipios")
     n = len(syn)
 
     # indicators, wide by year
@@ -132,8 +144,8 @@ def main():
         glossary[c] = DERIVED[c]
 
     # provisioning
-    syn = syn.merge(copy("provisioning_areas_attributes", read(con, "SELECT * FROM provisioning_areas_attributes")),
-                    on="municipio_code", how="left")
+    syn = syn.merge(attributes("provisioning_areas"), on="municipio_code", how="left")
+    syn = syn.merge(attributes("provisioning_areas_within"), on="municipio_code", how="left")
 
     # investments, wide
     inv = read(con, "SELECT * FROM municipios_investments")
@@ -167,7 +179,7 @@ def main():
     missing = [c for c in syn.columns if c not in glossary]
     if missing:
         sys.exit(f"glossary: no description for {missing}")
-    for c in [c for c in syn.columns if c.startswith("n_") or c == "provisioning_n_parts"]:
+    for c in [c for c in syn.columns if c.startswith("n_") or c.endswith("_n_parts")]:
         syn[c] = syn[c].astype("Int64")
 
     out.parent.mkdir(parents=True, exist_ok=True)

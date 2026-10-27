@@ -35,7 +35,7 @@ JOIN (
     FROM (
         SELECT DISTINCT s.system_id, a.municipio_name || ' (' || a.unidade_alias || ')' AS nm
         FROM systems_supply AS s
-        JOIN municipios_attributes AS a ON a.municipio_code = s.municipio_code
+        JOIN municipios AS a ON a.municipio_code = s.municipio_code
         ORDER BY s.system_id, nm
     ) AS d
     GROUP BY d.system_id
@@ -46,7 +46,7 @@ JOIN (
         COUNT(*)                     AS intakes_with_catchment,
         SUM(c.catchment_area_km2)    AS catchment_area_km2
     FROM intakes_systems AS i
-    JOIN catchments_attributes AS c ON c.intake_code = i.intake_code
+    JOIN catchments AS c ON c.intake_code = i.intake_code
     GROUP BY i.system_id
 ) AS ca ON ca.system_id = y.system_id
 ORDER BY ca.catchment_area_km2 DESC;

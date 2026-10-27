@@ -6,7 +6,7 @@
 --   (NULL where coverage is not reported; 0 where the Atlas gives no surface share although surface intakes are linked).
 -- Urban population density: population_urban_per_km2 = urban population 2020 / provisioning area (for the population plot).
 -- Region: first digit of the IBGE municipality code (1 Norte, 2 Nordeste, 3 Sudeste, 4 Sul, 5 Centro-Oeste).
--- Area: provisioning_areas_attributes.area_km2 (dissolve of the catchments; areas of municipalities sharing intakes overlap).
+-- Area: provisioning_areas.area_km2 (dissolve of the catchments; areas of municipalities sharing intakes overlap).
 SELECT
     m.municipio_name || ' (' || m.unidade_alias || ')'                                      AS municipio_label,
     a.municipio_code,
@@ -25,8 +25,8 @@ SELECT
     a.n_intakes_surface,
     a.n_parts,
     a.topology
-FROM provisioning_areas_attributes AS a
-JOIN municipios_attributes AS m
+FROM provisioning_areas AS a
+JOIN municipios AS m
   ON m.municipio_code = a.municipio_code
 LEFT JOIN municipios_indicators AS p
   ON p.municipio_code = a.municipio_code AND p.year = 2020

@@ -92,7 +92,13 @@ If `share_alloc` is relative to the system's served population:
 - Force the type at write time: `ST_Multi` in PostGIS, or in geopandas dissolve then cast to MultiPolygon. A dissolve silently returns Polygon for single-part cases otherwise.
 - Municipalities with no surface intake (wells only, or transfers with no mapped catchment) **still get a row**, with `geometry = NULL`, so `municipio_code` is a complete key across roughly 5,570 municipalities and "no polygon" differs from "not processed". Add a flag (`has_surface_intake` or `source_mix`) stating the reason.
 - Derived attributes worth storing: `n_intakes`, `n_parts` (`n_parts > 1` flags disjoint cases), `area_total`, optionally topology with its reference date, and optionally the share of the largest intake.
+- Holes: catchments have none, so a hole in the dissolve is a gap between neighbouring catchments (an area enclosed by catchments drains through them). Every hole is filled.
 - Transfers: include transferred intakes' catchments in the dissolve and flag the row `has_transfer`, so "provisioning area" means everything that physically feeds the city.
+
+### `provisioning_area_within` (derived)
+- The provisioning area clipped to the municipality's own polygon, one row per municipality, parts under 0.01 km² dropped (border slivers).
+- Not a link: the municipality–intake link is still the supply relation (rule 2). The intersection only clips an area already linked.
+- NULL attributes without provisioning area; NULL geometry with area 0 when the municipality is supplied entirely from outside.
 
 ---
 

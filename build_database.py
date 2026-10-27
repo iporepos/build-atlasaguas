@@ -5,32 +5,45 @@ Usage (project venv):  .venv/bin/python build_database.py --config build_databas
 
 Config keys: input_folder (T1 standard), output_gpkg, report_folder, catalog_layers (T1 LAYERS csv),
   schema (JSON with every table: columns, types, keys, checks, bilingual descriptions; also drives the catalogs),
-  provisioning (optional: area_crs, default ESRI:102033; nested_threshold, default 0.5; clean_tolerance, default 0.01),
+  provisioning (optional: area_crs, default ESRI:102033; nested_threshold, default 0.5; clean_tolerance, default 0.01;
+  within_min_part_km2, default 0.01),
   municipio_aliases (optional list of {name, unidade_alias, to}: old or renamed municipality names in the intake and
   system municipality lists, resolved to the DTB name `to` in the same state).
 
-T2 is NOT a copy of the T1 layout. It is a normalized schema (see build_database_schema.json, 20 tables + 2 views):
+T2 is NOT a copy of the T1 layout. It is a normalized schema (see build_database_schema.json, 15 tables: 8 plain + 7 spatial; 2 views):
   * naming: plural table names; `municipios` and `sedes` are the Portuguese exception; <entity>_<descriptor>;
-  * dry spatial layers (key + geometry only): municipios, municipios_sedes, intakes, aqueducts, catchments,
-    provisioning_areas; their descriptive columns live once in plain tables: municipios_attributes (incl. region,
-    operator and metropolitan region as simple columns), intakes_attributes, aqueducts_attributes,
-    catchments_attributes, provisioning_areas_attributes;
+  * spatial layers carry their own descriptive columns (no separate attribute tables, so QGIS needs no join):
+    municipios (incl. region, operator and metropolitan region as simple columns), municipios_sedes (key only),
+    intakes, aqueducts, catchments, provisioning_areas, provisioning_areas_within;
   * provisioning_areas (water-supply-nomenclature.md): one row per municipality, MultiPolygon dissolve of the catchments
     of the intakes linked by view provisioning_links = intakes_municipios (direct) UNION intakes_systems -> systems_supply
     (covered_percent > 0); never by spatial intersection. NULL geometry without surface intake (source_mix says why;
     n_intakes_system_only counts intakes reached only through an integrated system). Topology S / M-N / M-D /
     M-X from pairwise catchment overlap (intersection >= nested_threshold of the smaller one = nested, else disjoint;
-    pairs not clean, between clean_tolerance and 1 - clean_tolerance, go to provisioning_partial_overlaps.csv). It is the one stored
+    pairs not clean, between clean_tolerance and 1 - clean_tolerance, go to provisioning_partial_overlaps.csv).
+    Every hole of the dissolve is filled: catchments have none, so a hole is a gap between neighbouring catchments (an
+    area enclosed by catchments drains through them); filled holes go to provisioning_filled_holes.csv. A stored
     derived geometry (a dissolve cannot be a view in a GeoPackage); never sum its areas (shared intakes overlap);
+    upstream: n_intakes_surface_upstream = surface intake points inside the filled area (spatial join) not linked to the
+    municipality; covered_population_urban_upstream_2020 = covered population of their systems' surface supply rows in
+    other municipalities, each row once (the whole system counts even if one intake is upstream); NULL without area;
+  * provisioning_areas_within: the provisioning area clipped to the municipality's own polygon, polygon parts smaller
+    than within_min_part_km2 dropped (border slivers, listed in provisioning_within_dropped_parts.csv). Same rows as
+    provisioning_areas: NULL attributes without provisioning area; NULL geometry, area 0 and n_parts 0 when nothing is
+    left inside; share = fraction of the provisioning area inside, municipio_percent = percent of the municipality covered. The link is still the supply relation: the intersection only clips an area already linked;
+  * geometry checks after the dissolve and the clip: valid, non-empty MultiPolygon, no holes in the dissolve, area of
+    the raw dissolve within [largest catchment, sum of catchments], clip within the provisioning area and the municipality;
   * relations instead of list columns: systems_supply (system x municipality x source, with the share),
     intakes_systems, intakes_municipios, proposals_municipios;
   * repeated column groups become rows: municipios_indicators (year; population, demand and ISH),
     municipios_investments (group, component, period); proposals are one row per proposal;
   * derived values (totals, counts, assigned/covered population) are not stored (view systems_supply_population);
   * catalogs `tables` and `fields` document every table/column (pt, en, unit).
-Attribute tables are created with real PRIMARY KEY / FOREIGN KEY / NOT NULL / CHECK constraints (foreign keys are
-checked at the end with PRAGMA foreign_key_check). Spatial layers cannot carry constraints in a GeoPackage: their
-key is unique-indexed (so attribute tables can reference them) and verified at build time. 'NA'/empty text of T1 become NULL.
+Plain tables are created with real PRIMARY KEY / FOREIGN KEY / NOT NULL / CHECK constraints (foreign keys are
+checked at the end with PRAGMA foreign_key_check). Spatial layers are written by GDAL and cannot carry constraints: their
+key is unique-indexed (so plain tables can reference them), and their declared types, NOT NULL, CHECK (may use geom),
+foreign keys, geometry type and geometry NOT NULL (unless geometry.nullable) are verified by SQL after loading.
+'NA'/empty text of T1 become NULL.
 Systems have no key in the source: a system is (name + the municipalities connected through the municipality
 lists of SYSTEMS-MUNICIPALITIES in T1), found by connected components.
 The intake's municipality text lists the municipalities it SUPPLIES (matches the system-derived set for 99% of intakes; it
@@ -104,7 +117,7 @@ def name_key(s):
 
 
 def build_tables(src, report, opts):
-    t = {}  # table -> DataFrame (attribute tables) ; geo[table] -> GeoDataFrame
+    t = {}  # table -> DataFrame (plain tables) ; geo[table] -> GeoDataFrame (spatial layers with their attributes)
     geo = {}
     mun_g = src.table("MUNICIPALITIES")
     seat_g = src.table("SEATS")
@@ -141,8 +154,7 @@ def build_tables(src, report, opts):
         miss = set(df.municipio_code) - set(m.municipio_code)
         if miss:
             sys.exit(f"{lay}: municipio_code not in municipalities: {sorted(miss)[:5]}")
-    t["municipios_attributes"] = m.reset_index(drop=True)
-    geo["municipios"] = gpd.GeoDataFrame(m[["municipio_code"]].reset_index(drop=True), geometry=mun_g.geometry.values, crs=mun_g.crs)
+    geo["municipios"] = gpd.GeoDataFrame(m.reset_index(drop=True), geometry=mun_g.geometry.values, crs=mun_g.crs)
 
     # indicators by year: population/demand (2020, 2035) + ISH (2020)
     pop = []
@@ -294,8 +306,7 @@ def build_tables(src, report, opts):
         sys.exit("a water body code has more than one name")
     ia = itk[["intake_code", "intake_name", "intake_tradename", "intake_type", "intake_use_status", "treatment_type", "waterbody_code", "waterbody_name"]].copy()
     ia["location_method"] = itk.geometry_note
-    t["intakes_attributes"] = ia.reset_index(drop=True)
-    geo["intakes"] = gpd.GeoDataFrame(ia[["intake_code"]].reset_index(drop=True), geometry=itk.geometry.values, crs=itk.crs)
+    geo["intakes"] = gpd.GeoDataFrame(ia.reset_index(drop=True), geometry=itk.geometry.values, crs=itk.crs)
 
     # intake municipalities: the intake's own list of SUPPLIED municipalities (direct link; also used to resolve systems)
     imun, unm, iml = {}, [], []
@@ -368,17 +379,73 @@ def build_tables(src, report, opts):
         f"of these {len(set(itk.intake_code) - set(t['intakes_systems'].intake_code) - set(imun))} also without municipality)")
 
     # aqueducts, catchments, seats (spatial layers with their own attributes)
-    aqa = aq.drop(columns="geometry").reset_index(drop=True)
-    aqa["aqueduct_id"] = aqa.aqueduct_id.astype("int64")
-    t["aqueducts_attributes"] = aqa
-    geo["aqueducts"] = gpd.GeoDataFrame(aqa[["aqueduct_id"]], geometry=aq.geometry.values, crs=aq.crs)
-    t["catchments_attributes"] = cat.drop(columns="geometry").reset_index(drop=True)
-    t["catchments_attributes"]["n_parts"] = t["catchments_attributes"].n_parts.astype("int64")
+    geo["aqueducts"] = aq.reset_index(drop=True)
+    geo["catchments"] = cat.reset_index(drop=True)
     log(f"  catchments: {len(cat)}, sources {cat.catchment_source.value_counts().to_dict()}, "
-        f"multipart {int((cat.n_parts > 1).sum())}")
-    geo["catchments"] = gpd.GeoDataFrame(cat[["intake_code"]].reset_index(drop=True), geometry=cat.geometry.values, crs=cat.crs)
+        f"multipart {int((num(cat.n_parts) > 1).sum())}")
     geo["municipios_sedes"] = gpd.GeoDataFrame(seat_g[["municipio_code"]], geometry=seat_g.geometry.values, crs=seat_g.crs)
     return t, geo
+
+
+def polygon_parts(g):
+    """Polygon parts of any geometry (lines and points left by an intersection or make_valid are dropped)."""
+    return [p for p in shapely.get_parts(shapely.get_parts(g)) if p.geom_type == "Polygon" and not p.is_empty]
+
+
+def multi(parts):
+    return shapely.MultiPolygon(parts) if parts else None
+
+
+def check_polygons(name, keys, gs, holes_allowed):
+    """Stop unless every geometry is NULL or a valid, non-empty MultiPolygon (and, if asked, without holes)."""
+    bad = {}
+    for k, g in zip(keys, gs):
+        if g is None:
+            continue
+        why = ("not MultiPolygon" if g.geom_type != "MultiPolygon" else "empty" if g.is_empty else
+               "invalid: " + shapely.is_valid_reason(g) if not g.is_valid else
+               "has holes" if not holes_allowed and any(len(p.interiors) for p in g.geoms) else None)
+        if why:
+            bad[k] = why
+    if bad:
+        sys.exit(f"{name}: {len(bad)} bad geometries {dict(list(bad.items())[:5])}")
+
+
+def build_within(geo, pa, gs, area_crs, min_part, report):
+    """provisioning_areas_within: each provisioning area clipped to its own municipality polygon; parts below min_part km2
+    (border slivers) are dropped. NULL attributes without provisioning area; NULL geometry, area 0, n_parts 0 if none left.
+    municipio_percent: area_km2 over the municipality polygon area, both in area_crs."""
+    mun = geo["municipios"]
+    mgeom = dict(zip(mun.municipio_code, shapely.make_valid(mun.geometry.values)))
+    keys, parts = [], []
+    for mu, g in zip(pa.municipio_code, gs):
+        if g is not None:
+            for p in polygon_parts(shapely.intersection(g, mgeom[mu])):
+                keys.append(mu)
+                parts.append(p)
+    pk = pd.DataFrame({"municipio_code": keys, "a": gpd.GeoSeries(parts, crs=gs.crs).to_crs(area_crs).area.values / 1e6})
+    keep = pk.a >= min_part
+    report["provisioning_within_dropped_parts.csv"] = pk[~keep].rename(columns={"a": "part_area_km2"}).round(6)
+    kept = {}
+    for mu, p in zip(pk.municipio_code[keep], np.array(parts, dtype=object)[keep.values]):
+        kept.setdefault(mu, []).append(p)
+    wg = gpd.GeoSeries([multi(kept.get(mu, [])) for mu in pa.municipio_code], crs=gs.crs)
+    check_polygons("provisioning_areas_within", pa.municipio_code, wg, holes_allowed=True)  # municipal enclaves are real holes
+    has = pa.area_km2.notna().values
+    w = pd.DataFrame({"municipio_code": pa.municipio_code.values, "municipio_name": pa.municipio_name.values})
+    w["area_km2"] = np.where(has, wg.to_crs(area_crs).area.fillna(0).values / 1e6, np.nan)
+    w["n_parts"] = pd.array([len(kept.get(mu, [])) if h else None for mu, h in zip(pa.municipio_code, has)], dtype="Int64")
+    share = w.area_km2.values / pa.area_km2.values
+    marea = mun.set_index("municipio_code").geometry.to_crs(area_crs).area.reindex(pa.municipio_code).values / 1e6
+    if (share > 1 + 1e-9).any() or (w.area_km2.values > marea * (1 + 1e-6)).any():
+        sys.exit("provisioning_areas_within: clipped area larger than the provisioning area or the municipality")
+    w["share"] = np.minimum(share, 1.0)
+    w["municipio_percent"] = np.minimum(w.area_km2.values / marea * 100, 100.0)
+    geo["provisioning_areas_within"] = gpd.GeoDataFrame(w, geometry=wg.values, crs=gs.crs)
+    s = w.share.dropna()
+    log(f"  provisioning_areas_within: {int(wg.notna().sum())} with geometry, {int((s == 0).sum())} entirely outside the municipality, "
+        f"{int((s > 0.999).sum())} at least 99.9% inside, median share {s.median():.3f}, median municipio_percent {w.municipio_percent.median():.1f}; "
+        f"{int((~keep).sum())} parts below {min_part} km2 dropped ({pk.a[~keep].sum():.4f} km2)")
 
 
 def build_provisioning(t, geo, opts, report):
@@ -396,7 +463,7 @@ def build_provisioning(t, geo, opts, report):
     link = pd.concat([direct, via]).groupby(["intake_code", "municipio_code"], as_index=False)[["d", "s"]].max()
     link["link_source"] = np.select([link.d.eq(1) & link.s.eq(1), link.d.eq(1)], ["both", "direct"], "system")
     t["provisioning_links"] = link[["intake_code", "municipio_code", "link_source"]]
-    link = link.merge(t["intakes_attributes"][["intake_code", "intake_type"]], on="intake_code")
+    link = link.merge(geo["intakes"][["intake_code", "intake_type"]], on="intake_code")
     cat = geo["catchments"]
     geom = dict(zip(cat.intake_code, shapely.make_valid(cat.geometry.values)))
     area = dict(zip(cat.intake_code, cat.geometry.to_crs(area_crs).area.values / 1e6))
@@ -435,40 +502,73 @@ def build_provisioning(t, geo, opts, report):
 
     counts = link.groupby(["municipio_code", "intake_type"]).size().unstack(fill_value=0)
     sys_only = link[link.link_source == "system"].groupby("municipio_code").size()
-    rows, geoms = [], []
-    muns = t["municipios_attributes"].municipio_code
+    rows, raw = [], []
+    muns = geo["municipios"].municipio_code
     with_system = set(t["systems_supply"].municipio_code)
     for mu in muns:
         ns = int(counts.at[mu, "Superficial"]) if mu in counts.index and "Superficial" in counts else 0
         ng = int(counts.at[mu, "Subterrânea"]) if mu in counts.index and "Subterrânea" in counts else 0
         mix = ("surface_groundwater" if ng else "surface") if ns else ("groundwater" if ng else ("no_intake" if mu in with_system else "no_system"))
-        g = parts = a = topo = None
+        g = topo = None
         if ns:
             codes = sorted(surf.intake_code[surf.municipio_code == mu])
-            g = shapely.union_all([geom[c] for c in codes])
-            g = g if g.geom_type == "MultiPolygon" else shapely.MultiPolygon(shapely.get_parts(g))
-            parts = shapely.get_num_geometries(g)
+            g = multi(polygon_parts(shapely.union_all([geom[c] for c in codes])))
             topo = topology(codes)
-        rows.append((mu, mix, ns, ng, int(sys_only.get(mu, 0)), parts, a, topo))
-        geoms.append(g)
+        rows.append((mu, mix, ns, ng, int(sys_only.get(mu, 0)), None, None, topo))
+        raw.append(g)
     pa = pd.DataFrame(rows, columns=["municipio_code", "source_mix", "n_intakes_surface", "n_intakes_groundwater", "n_intakes_system_only",
                                      "n_parts", "area_km2", "topology"])
-    gs = gpd.GeoSeries(geoms, crs=cat.crs)
-    pa["area_km2"] = gs.to_crs(area_crs).area / 1e6
-    pa["n_parts"] = pa.n_parts.astype("Int64")
-    t["provisioning_areas_attributes"] = pa
-    geo["provisioning_areas"] = gpd.GeoDataFrame(pa[["municipio_code"]], geometry=gs, crs=cat.crs)
-    # the dissolve never exceeds the sum of its catchments and never falls below the largest one
+    pa.insert(1, "municipio_name", pa.municipio_code.map(geo["municipios"].set_index("municipio_code").municipio_name))
+    # the raw dissolve never exceeds the sum of its catchments and never falls below the largest one
     summed = surf.assign(a=surf.intake_code.map(area)).groupby("municipio_code").a.agg(["sum", "max"])
-    chk = pa.set_index("municipio_code").area_km2.dropna().to_frame().join(summed)
-    if ((chk.area_km2 > chk["sum"] * (1 + 1e-6)) | (chk.area_km2 < chk["max"] * (1 - 1e-6))).any():
+    chk = pd.Series(gpd.GeoSeries(raw, crs=cat.crs).to_crs(area_crs).area.values / 1e6, index=pa.municipio_code).dropna().to_frame("a").join(summed)
+    if ((chk.a > chk["sum"] * (1 + 1e-6)) | (chk.a < chk["max"] * (1 - 1e-6))).any():
         sys.exit("provisioning: dissolved area outside [largest catchment, sum of catchments]")
+    # fill the holes: catchments have none, so a hole is a gap between neighbouring catchments
+    geoms, holes = [], []
+    for mu, g in zip(pa.municipio_code, raw):
+        if g is not None and any(len(p.interiors) for p in g.geoms):
+            holes += [(mu, shapely.Polygon(r)) for p in g.geoms for r in p.interiors]
+            g = multi(polygon_parts(shapely.union_all([shapely.Polygon(p.exterior) for p in g.geoms])))
+        geoms.append(g)
+    gs = gpd.GeoSeries(geoms, crs=cat.crs)
+    check_polygons("provisioning_areas", pa.municipio_code, gs, holes_allowed=False)
+    pa["area_km2"] = gs.to_crs(area_crs).area / 1e6
+    pa["n_parts"] = pd.array([None if g is None else shapely.get_num_geometries(g) for g in geoms], dtype="Int64")
+    hp = gpd.GeoSeries([h for _, h in holes], crs=cat.crs).to_crs(area_crs)
+    report["provisioning_filled_holes.csv"] = pd.DataFrame({"municipio_code": [mu for mu, _ in holes], "hole_area_km2": (hp.area / 1e6).round(6).values,
+                                                            "hole_mean_width_m": (2 * hp.area / hp.length).round(1).values})
+    log(f"  provisioning holes filled: {len(holes)} in {len({mu for mu, _ in holes})} areas, {hp.area.sum() / 1e6:.2f} km2 in total, "
+        f"largest {hp.area.max() / 1e6 if len(hp) else 0:.3f} km2")
+    # upstream: surface intake points inside the (filled) provisioning area that are not linked to the municipality; the covered
+    # population of their systems in other municipalities (surface supply rows, each row once per area)
+    itk = geo["intakes"]
+    pts = itk.loc[itk.intake_type == "Superficial", ["intake_code", "geometry"]]
+    has = gs.notna().values
+    polys = gpd.GeoDataFrame({"area_of": pa.municipio_code[has].values}, geometry=gs[has].values, crs=gs.crs)
+    up = gpd.sjoin(pts.to_crs(gs.crs), polys, predicate="intersects")[["intake_code", "area_of"]]
+    own = link[["intake_code", "municipio_code"]].rename(columns={"municipio_code": "area_of"}).assign(own=True)
+    up = up.merge(own, on=["intake_code", "area_of"], how="left")
+    up = up[up.own.isna()].drop(columns="own").drop_duplicates()
+    ind = t["municipios_indicators"].query("year == 2020")[["municipio_code", "population_urban", "supply_coverage"]]
+    cov = t["systems_supply"].query("intake_type == 'Superficial'").merge(ind, on="municipio_code", how="left")
+    cov["covered"] = cov.population_urban * cov.covered_percent / 100 * cov.supply_coverage / 100
+    served = up.merge(t["intakes_systems"], on="intake_code").merge(cov[["supply_id", "system_id", "municipio_code", "covered"]], on="system_id")
+    served = served[served.municipio_code != served.area_of].drop_duplicates(["area_of", "supply_id"])
+    pa["n_intakes_surface_upstream"] = pd.array(np.where(has, up.groupby("area_of").size().reindex(pa.municipio_code).fillna(0).values, np.nan), dtype="Int64")
+    pa["covered_population_urban_upstream_2020"] = np.where(has, served.groupby("area_of").covered.sum().reindex(pa.municipio_code).fillna(0).values, np.nan)
+    n_up = pa.n_intakes_surface_upstream.dropna()
+    log(f"  upstream: {len(up)} (area, surface intake) pairs, {int((n_up > 0).sum())} of {len(n_up)} provisioning areas with upstream intakes "
+        f"(max {n_up.max()}); {served.municipio_code.nunique()} municipalities served upstream; "
+        f"{int(served.drop_duplicates('supply_id').covered.isna().sum())} of their supply rows without coverage add nothing")
+    geo["provisioning_areas"] = gpd.GeoDataFrame(pa, geometry=gs, crs=cat.crs)
     partial = [(a, b, round(v, 4), "nested" if v >= nested_at else "disjoint") for (a, b), v in pair.items() if tol < v < 1 - tol]
     report["provisioning_partial_overlaps.csv"] = pd.DataFrame(partial, columns=["intake_code_a", "intake_code_b", "overlap_share", "classified_as"])
     log(f"  provisioning_areas: {pa.area_km2.notna().sum()} with geometry; source_mix {pa.source_mix.value_counts().to_dict()}; "
         f"topology {pa.topology.value_counts().to_dict()}; multipart {int((pa.n_parts > 1).sum())}; "
         f"catchment pairs {len(pair)} ({len(partial)} not clean, overlap between {tol} and {1 - tol} of the smaller one: "
         f"{sum(r[3] == 'nested' for r in partial)} classified nested, {sum(r[3] == 'disjoint' for r in partial)} disjoint)")
+    build_within(geo, pa, gs, area_crs, float(opts.get("within_min_part_km2", 0.01)), report)
 
 
 # --------------------------------------------------------------------------- DDL / load
@@ -491,6 +591,45 @@ def ddl(tbl):
     for ck in tbl.get("checks", []):
         parts.append(f"CHECK ({ck})")
     return f'CREATE TABLE "{tbl["name"]}" (\n  ' + ",\n  ".join(parts) + "\n)"
+
+
+def typed(g, tb):
+    """The schema columns of a spatial layer, in schema order, cast to their declared type (GDAL takes the column type
+    from the dtype; a value that does not convert stops the build)."""
+    out = pd.DataFrame(index=g.index)
+    for c in tb["columns"]:
+        v = g[c["name"]]
+        if c["type"] in ("INTEGER", "REAL"):
+            n = pd.to_numeric(v, errors="coerce")
+            if (n.isna() & v.notna()).any() or (c["type"] == "INTEGER" and (n.dropna() % 1 != 0).any()):
+                sys.exit(f"{tb['name']}.{c['name']}: values that are not {c['type']}")
+            v = n.astype("Int64" if c["type"] == "INTEGER" else "float64")
+        else:
+            v = v.astype(object).where(v.notna(), None)
+        out[c["name"]] = v
+    return out
+
+
+def verify_spatial(con, tb):
+    """What a CREATE TABLE would enforce on a plain table, checked on a spatial layer written by GDAL."""
+    name = tb["name"]
+    have = {r[1]: r[2] for r in con.execute(f'PRAGMA table_info("{name}")')}
+    wrong = {c["name"]: have.get(c["name"]) for c in tb["columns"] if have.get(c["name"]) != c["type"]}
+    gtype = con.execute("SELECT geometry_type_name FROM gpkg_geometry_columns WHERE table_name = ?", (name,)).fetchone()
+    if wrong or gtype is None or gtype[0] != tb["geometry"]["type"].upper():
+        sys.exit(f"{name}: column types {wrong} or geometry type {gtype} differ from the schema")
+    tests = [(f'"{c["name"]}" IS NULL', f'{c["name"]} NOT NULL') for c in tb["columns"] if c.get("not_null")]
+    if not tb["geometry"].get("nullable"):
+        tests.append(("geom IS NULL", "geom NOT NULL"))
+    tests += [(f"NOT ({ck})", f"CHECK ({ck})") for ck in tb.get("checks", [])]
+    for f_ in tb["foreign_keys"]:
+        col, ref = f_["columns"][0], f_["ref_columns"][0]
+        tests.append((f'"{col}" IS NOT NULL AND "{col}" NOT IN (SELECT "{ref}" FROM "{f_["ref_table"]}")',
+                      f'{col} references {f_["ref_table"]}'))
+    for where, what in tests:
+        n = con.execute(f'SELECT COUNT(*) FROM "{name}" WHERE {where}').fetchone()[0]
+        if n:
+            sys.exit(f"{name}: {n} rows violate {what}")
 
 
 def py(v):
@@ -536,22 +675,26 @@ def main():
     out.parent.mkdir(parents=True, exist_ok=True)
     if part.exists():
         part.unlink()
-    # spatial layers first (creates the GeoPackage structure); declared columns must match, keys must be unique
-    for name, g in geo.items():
+    # spatial layers first (creates the GeoPackage structure), schema columns cast to their declared types; keys must be unique
+    spatial = [n for n in schema if schema[n]["kind"] == "spatial"]
+    if set(spatial) != set(geo):
+        sys.exit(f"spatial layers built {sorted(geo)} differ from schema {sorted(spatial)}")
+    for name in spatial:
         tb = schema[name]
+        g = geo[name]
         pk = tb["primary_key"][0]
         if g[pk].duplicated().any() or g[pk].isna().any():
             sys.exit(f"{name}: key {pk} duplicated or null")
-        for f_ in tb["foreign_keys"]:
-            parent = geo.get(f_["ref_table"]) if f_["ref_table"] in geo else tables[f_["ref_table"]]
-            notin = set(g[f_["columns"][0]]) - set(parent[f_["ref_columns"][0]])
-            if notin:
-                sys.exit(f"{name}: {len(notin)} values of {f_['columns'][0]} missing in {f_['ref_table']}")
-        pyogrio.write_dataframe(g, part, layer=name, driver="GPKG", append=part.exists())
+        gtype = tb["geometry"]["type"]
+        other = set(g.geometry.dropna().geom_type) - {gtype}
+        if other:
+            sys.exit(f"{name}: geometry types {other}, schema says {gtype}")
+        g = gpd.GeoDataFrame(typed(g, tb), geometry=g.geometry.values, crs=g.crs)
+        pyogrio.write_dataframe(g, part, layer=name, driver="GPKG", geometry_type=gtype, append=part.exists())
         log(f"  spatial {name}: {len(g)} rows")
     con = sqlite3.connect(part)
     con.execute("PRAGMA foreign_keys = ON")
-    for name, tb in schema.items():  # unique key index first: attribute tables reference these layers
+    for name, tb in schema.items():  # unique key index first: plain tables reference these layers
         if tb["kind"] == "spatial":
             key = tb["primary_key"][0]
             con.execute(f'CREATE UNIQUE INDEX "ux_{name}_{key}" ON "{name}" ("{key}")')
@@ -588,11 +731,14 @@ def main():
             con.execute('INSERT INTO "fields" VALUES (?,?,?,?,?,?,?,?)', (name, c["name"], c["type"], int(c["name"] in tb["primary_key"]),
                                                                           int(bool(c.get("not_null"))), c.get("unit", ""), c["description_pt"], c["description_en"]))
         if tb["kind"] == "spatial":
-            con.execute('INSERT INTO "fields" VALUES (?,?,?,?,?,?,?,?)', (name, "geom", tb["geometry"]["type"].upper(), 0, 1, "", "Geometria", "Geometry"))
+            con.execute('INSERT INTO "fields" VALUES (?,?,?,?,?,?,?,?)', (name, "geom", tb["geometry"]["type"].upper(), 0,
+                                                                          int(not tb["geometry"].get("nullable")), "", "Geometria", "Geometry"))
     for name in ("tables", "fields"):
         con.execute("INSERT INTO gpkg_contents (table_name, data_type, identifier, description, last_change) "
                     "VALUES (?, 'attributes', ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now'))", (name, name, "Catalog"))
     con.commit()
+    for name in spatial:
+        verify_spatial(con, schema[name])
     bad = con.execute("PRAGMA foreign_key_check").fetchall()
     if bad:
         sys.exit(f"foreign key violations: {bad[:5]}")

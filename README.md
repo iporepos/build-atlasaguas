@@ -18,7 +18,7 @@ legacy ANA files --(archive/standardize_t1.py, done once, archived)--> T1 --(bui
 - **T1** is a folder of standardized files. It is the source for every build.
 - **T2** is the published GeoPackage. It is always rebuilt from T1 and never edited by hand.
 - A catchment fix goes into T1 and reaches T2 at the next build, together with everything computed from it
-  (catchment attributes, provisioning areas, overlap report).
+  (catchment attributes, provisioning areas and their part inside each municipality, overlap and holes reports).
 - History lives in the Zenodo versions: each release is a new version under the same concept DOI.
 
 ## Setup
@@ -116,7 +116,8 @@ Upload both zips as a new version of the Zenodo record, with the description in 
 ## Municipality synthesis table
 
 `synthesis_municipios.py` writes one CSV row per municipality (5,572) with every per-municipality value in T2:
-attributes, indicators (2020 and 2035), supply shares and covered population, provisioning area attributes,
+attributes, indicators (2020 and 2035), supply shares and covered population, provisioning area attributes
+(total and inside the municipality),
 investments and proposal counts. A glossary CSV (pt/en, units) is written next to it.
 
 ```
