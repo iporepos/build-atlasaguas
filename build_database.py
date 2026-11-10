@@ -463,6 +463,15 @@ def build_provisioning(t, geo, opts, report):
     link = pd.concat([direct, via]).groupby(["intake_code", "municipio_code"], as_index=False)[["d", "s"]].max()
     link["link_source"] = np.select([link.d.eq(1) & link.s.eq(1), link.d.eq(1)], ["both", "direct"], "system")
     t["provisioning_links"] = link[["intake_code", "municipio_code", "link_source"]]
+    # convenience columns for QGIS (catchment revision): supplied municipality names per intake, intake name per catchment
+    names = link.municipio_code.map(geo["municipios"].set_index("municipio_code").municipio_name)
+    mun_list = names.groupby(link.intake_code).agg(lambda s: LIST_SEP.join(sorted(s, key=norm)))
+    geo["intakes"].insert(geo["intakes"].columns.get_loc("intake_name") + 1, "municipios", geo["intakes"].intake_code.map(mun_list))
+    cat = geo["catchments"]
+    cat.insert(cat.columns.get_loc("intake_code") + 1, "intake_name", cat.intake_code.map(geo["intakes"].set_index("intake_code").intake_name))
+    cat.insert(cat.columns.get_loc("intake_name") + 1, "municipios", cat.intake_code.map(mun_list))
+    log(f"  municipios lists: {geo['intakes'].municipios.notna().sum()} of {len(geo['intakes'])} intakes, "
+        f"{cat.municipios.notna().sum()} of {len(cat)} catchments")
     link = link.merge(geo["intakes"][["intake_code", "intake_type"]], on="intake_code")
     cat = geo["catchments"]
     geom = dict(zip(cat.intake_code, shapely.make_valid(cat.geometry.values)))

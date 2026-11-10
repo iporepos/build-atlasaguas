@@ -1,0 +1,32 @@
+{
+ "gpkg": "/path/to/folder/ANA_ATLASAGUAS_DB_BRAZIL_2021.gpkg",
+ "municipios": "lists/capitals.txt",
+ "output_folder": "/path/to/folder/municipio_checks/phase1_capitals_zoom",
+ "zoom": "intakes",
+ "zoom_scale": 5,
+ "zoom_min_km": 10,
+ "drainage": {
+  "path": "/vsizip//path/to/folder/HydroRIVERS_v10_sa_shp.zip/HydroRIVERS_v10_sa_shp/HydroRIVERS_v10_sa.shp",
+  "linewidth": 0.25,
+  "column": "ORD_STRA",
+  "cmap": "Blues",
+  "cmap_range": [
+   0.35,
+   1.0
+  ],
+  "linewidth_range": [
+   0.2,
+   0.6
+  ],
+  "max_reaches": 2000,
+  "tie_column": "UPLAND_SKM"
+ },
+ "dpi": 300,
+ "urban_areas": {
+  "path": "/path/to/folder/bc250_db.gpkg|layername=lml_area_densamente_edificada_a",
+  "color": "#814446"
+ },
+ "water_bodies": {
+  "path": "/path/to/folder/bc250_db.gpkg|layername=hid_massa_dagua_a"
+ }
+}

@@ -712,6 +712,14 @@
     "description_en": "Intake name"
    },
    {
+    "name": "municipios",
+    "type": "TEXT",
+    "not_null": false,
+    "unit": "",
+    "description_pt": "Nomes dos municípios abastecidos pela captação (provisioning_links: ligação direta ou via sistema), em ordem alfabética, separados por ' | ' (cópia para leitura; vazio sem ligação)",
+    "description_en": "Names of the municipalities supplied by the intake (provisioning_links: direct link or through the system), alphabetical, separated by ' | ' (copy for convenience; empty without a link)"
+   },
+   {
     "name": "intake_tradename",
     "type": "TEXT",
     "not_null": false,
@@ -868,6 +876,22 @@
     "unit": "",
     "description_pt": "Captação",
     "description_en": "Intake"
+   },
+   {
+    "name": "intake_name",
+    "type": "TEXT",
+    "not_null": false,
+    "unit": "",
+    "description_pt": "Nome da captação (cópia de intakes, para leitura)",
+    "description_en": "Intake name (copy from intakes, for convenience)"
+   },
+   {
+    "name": "municipios",
+    "type": "TEXT",
+    "not_null": false,
+    "unit": "",
+    "description_pt": "Nomes dos municípios abastecidos pela captação (provisioning_links: ligação direta ou via sistema), em ordem alfabética, separados por ' | ' (cópia para leitura; vazio sem ligação)",
+    "description_en": "Names of the municipalities supplied by the intake (provisioning_links: direct link or through the system), alphabetical, separated by ' | ' (copy for convenience; empty without a link)"
    },
    {
     "name": "catchment_source",

@@ -184,3 +184,70 @@ History before this repo: `Bench/MEMORY.md`, entries 2026-10-05, 2026-10-21 and 
   Scratch: median 15.3%; Porto Alegre 100%, São Paulo 15.75%, Manaus 82%.
 - `share` stays a 0-1 fraction (percent asked only for the new column): possible inconsistency to raise with the user.
 - synthesis: skips municipio_name of non-municipios layers; + provisioning_within_municipio_percent (59 columns).
+
+## 2026-11-10 — catchment revision run prep; municipios / intake_name columns
+- revise_catchments.local.json: replace items were `{code: path}`, fixed to `{code: {"replace": path}}`. Dry run:
+  7 replacements apply (2 intake-distance warnings: IN07646941409296001 1,872 m, IN07028561320631001 1,852 m);
+  3 edit items skipped (IN05984471297669001, IN08714461380733001, IN06699651356994001: geometry unchanged in T1, the
+  QGIS edits were never saved). 13 rows already manual_replaced from before (Guaíba x12, IN07101421305821001).
+- Which were revised: catchment_source (manual_replaced / *_manual_edits) + the run log; exact set = diff vs backup.
+- User request (scope exception, for the Brazil-wide catchment revision in QGIS): intakes + `municipios` (after
+  intake_name), catchments + `intake_name`, `municipios` (after intake_code). municipios = DTB names of the
+  provisioning_links municipalities (direct + via system), sorted (accent-insensitive), " | "; NULL without a link.
+  Names only, no UF (homonyms possible). Scratch build: all checks pass; 18,252 intakes and 4,063 catchments all have
+  a list (max 30 names); 6 catchments with NULL intake_name (source); other columns + geometry identical to real T2.
+  Zenodo version log line updated.
+- User to run: revise_catchments.py (real), then build_database.py --overwrite.
+
+## 2026-11-10 — plots/plot_municipio_check.py (catchment revision maps)
+- Strategy (prompts/revision_plan.md): by state; capital system first (visual + sanitation plans), then metropolitan
+  municipalities, then suspicious ones (provisioning area < 100 m2/inhabitant, later 1 ha).
+- New script (user asked tool/, then plots/): one municipality -> <code>_<NAME>.jpeg, 20 cm, 300 dpi. Intakes =
+  provisioning_links (direct + system); catchments of those; frame = municipio + catchments + 4% margin (points
+  outside only logged); UTM (estimate_utm_crs); scale bar, small legend with counts, title "code  Name (UF)".
+  Drainage optional: HydroRIVERS sa shp read in place via /vsizip with bbox + where (GDAL quirk: `where` with
+  columns=[] returns 0 rows, so all columns are read). Local config output -> T2/REPORT/municipio_checks.
+- Tested Caxias do Sul 4305108 in scratch: 6 surface intakes, 6 catchments, 412 drainage lines, 1.6 s.
+- Drainage styled by a column (drainage.column, e.g. ORD_STRA): cmap (Blues cut to cmap_range [0.35, 1]) + width
+  (linewidth_range [0.2, 0.6]) on the local min-max in the frame; column absent / not found -> single style.
+- Layout: A4 landscape (29.7 x 21 cm, 3507 x 2480 px at 300 dpi). Map box left (frame grows on its short side to the
+  box aspect), framed, 3-4 inward lon/lat ticks placed where meridians/parallels cross each edge (UTM frame), labels
+  bottom/left. 5 cm right panel: code, name (UF), metro region, operator, facts from T2 (municipality area, urban pop
+  2020, provisioning area, m2/urban inhabitant, source_mix, topology/parts, upstream intakes), legend, sources.
+  width_cm and title keys removed. Caxias do Sul: 295 m2/inhabitant, M-X / 3.
+- Background: other municipalities in the frame (light gray #f1f0ec, edges #c4c3be 0.3 pt); target municipio fill +
+  stronger border (#3d3c39, 0.9 pt) drawn above the catchments. Seats (municipios_sedes) as small diamonds with names
+  (white halo; own name bold), labels under the intake points so no intake is hidden. Legend + 2 entries.
+- Intakes restyled: surface blue #2a78d6 (was light purple #a78bfa), groundwater orange #ef7d1a, both larger (point_size 32) with a white border (point_edge 0.9 pt); legend markers to match.
+- Seat labels capped: max_labels (default 20), own municipio first then by urban population 2020; all diamonds drawn. São Paulo 3550308: 54 seats, 20 labelled; only 5 surface intakes/catchments linked, 84 m2/inhabitant (Cantareira not in the links: revision/link candidate).
+- Unlabelled seats: smaller (seat_unlabelled_scale 0.55 of the marker area) and lighter (#9a9994); labelled ones unchanged.
+- Optional water_bodies polygon layer (IBGE BC250 hid_massa_dagua_a, EPSG:4674, spatial index: fast): light blue #b9dcf2, edge #7fb3d5 0.2 pt, above municipality fills, below catchments (zorder 1.5; tried above catchments + drainage, user reverted); path accepts QGIS "file|layername=x". Shared reader read_in_frame (drainage uses it too). Legend + credit line.
+- Projection: default "local" = Lambert azimuthal equal-area centred on the bounds of municipio + catchments (was UTM of the municipio: wrong for catchments spanning zones); "utm" or any CRS via the projection key. Reading bboxes from a densified frame (curved edges in lat/long). Porto Alegre (85,403 km2 Guaíba, ~5° wide) renders fine: 391 seats, 19k drainage lines.
+- Batch: config key `municipios` = code | list | txt file (one code per line, '#' comments, extra text after the code
+  ignored) | list mixing both; old `municipio_code` still read. --municipio takes several codes/files (cwd-relative).
+  Per-municipio errors logged, batch goes on, exit 1 at the end; skip_existing / --skip-existing. Refactor: plot_one().
+  Tested: list with comment, repeat, unknown code 9999999 (logged, exit 1); skip-existing. Configs: municipios list
+  (local config had 4322400 set by the user, kept).
+- Phases (user): 1 = 27 state capitals; 2 = 20 largest municipalities per state (proxy for urban centres; the 1,000+
+  metropolitan municipalities are too many); then suspicious cases (< 100 m2/inhabitant).
+- plots/lists/capitals.txt (27 codes, names checked in T2) + plot_municipio_check_capitals.{example,local}.json, output
+  T2/REPORT/municipio_checks/phase1_capitals (the script creates folders). Scratch run: 27/27 in 2 min 41 s.
+  Notes: Natal 109 groundwater intakes, 0 catchments, 6 points outside the frame (frame = municipio + catchments);
+  Aracaju 630,351 km2 (São Francisco), 2,479 seats in frame.
+- Frame = core municipio parts + catchments + linked intake points (+ margin); projection centre from the same extent.
+  core_parts: parts > part_max_distance_km (50, ESRI:102033) from the largest part dropped from the frame only (still
+  drawn if inside). Vitória: 5 parts dropped (Trindade, Martim Vaz); Florianópolis: none (mainland part kept).
+  Natal: all 109 groundwater points now inside the frame.
+- Title 11 pt (title_size), wrapped at 24 chars, shrinks by 0.5 pt down to 8 pt until each line fits the panel
+  (measured with the renderer). Belo Horizonte (MG) now fits.
+- Optional urban_areas (IBGE BC250 lml_area_densamente_edificada_a, 8,391 polygons, EPSG:4674): #814446, no border, alpha (1), zorder 1.2 just above the municipality fills; legend + credit; added to all 4 configs. BH: 115 polygons.
+- Drainage declutter: drop_fraction (0.1) of the local min-max scale dropped. With ORD_STRA (integers, local min always 1) it only ever drops order 1 (~50% of reaches): Caxias 284/587, BH 433/855, POA 9,748/19,127, Aracaju 70,164/138,714. Does not scale with extent until max order >= 11: alternatives offered to the user (larger fraction, UPLAND_SKM on log scale, target count).
+- Declutter replaced (user chose option 3): drainage.max_reaches (2000; 0 = all) largest by column kept, ties broken by tie_column (UPLAND_SKM: downstream reaches of a partly kept order stay; without it whole classes dropped). drop_fraction removed. Color/width scaled on the min-max of ALL reaches in the frame before the cut (scaling on the kept range made order 7 thin and light on Aracaju, São Francisco invisible). Caxias 587/587, POA 2000/19,127 (orders 4-7), Aracaju 2000/138,714 (7-8). Configs: "where": "ORD_STRA >= 1" removed (no-op), max_reaches + tie_column added.
+- Zoom mode: "zoom": "intakes" (optional) -> square centred on the intake points' bounds, side = zoom_scale (5) x
+  their larger side, min zoom_min_km (10); projection centred there; then grown to the map box aspect. No points ->
+  default frame. Config plot_municipio_check_capitals_zoom.{local,example}.json -> phase1_capitals_zoom. Scratch:
+  27/27 in 55 s (after fix). Squares 10 km (Fortaleza, intakes clustered at Gavião) to 478 km (Rio): with spread intakes
+  5x zooms OUT (BH 270 km > default frame) - told the user.
+- Fix: draw() helper skips empty layers (geopandas hands an empty frame to pandas: "no numeric data to plot";
+  Fortaleza 10 km frame had no seat).
+- Zoom falls back to the default frame when its frame (after aspect growth) is not smaller in area (both LAEA, equal-area) - make_frame() builds both. Capitals: 14 zoomed, 13 default (Natal, João Pessoa, Recife, BH, Vitória, Rio, SP, Curitiba, Florianópolis, Campo Grande, Brasília...): intakes spread, 5x too wide.
