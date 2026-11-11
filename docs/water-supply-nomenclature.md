@@ -27,6 +27,10 @@ Why "provisioning" and "delivery": *supply* alone is ambiguous between the produ
 
 - **Supply system (drinking water)**: the whole chain: provisioning area, intake, raw-water conveyance, treatment plant, delivery network, people served.
 - **Transfer**: an aqueduct or conveyance linking a distant intake to the system. It is a *link*, not an area. It matters because the provisioning area can lie in a different basin from the city (e.g. São Francisco water reaching Northeast municipalities).
+  - Implemented case: water from the river of a **source** intake is released into the river of a **target** intake. The source catchment then feeds the target, but the target's catchment stays untouched (rule 1). The link is a (target, source) row in `catchments_transfers`, which carries a copy of the source catchment, refreshed at every build.
+  - Not recursive: only the declared pairs count. A chain A → B → C is written as two explicit sources for C.
+  - Catchment-only case: the catchment of an official intake feeds the transfer (e.g. an open channel of a transfer aqueduct) but the intake point itself plays no part. Listed under `catchments_only` in the same JSON; the row has `transfer_type` `catchment` and no transfer intake is shown.
+  - Second case: no official intake at the source. A drawn polygon linked to the target (`catchments_transfers` with `source_intake_code` NULL, optional `note`), read from the T1 GeoPackage `TRANSFERS-CATCHMENTS.gpkg` (layer `transfers_catchments`) at every build.
 - Chain structure is a **graph, not a line**: several intakes can feed one plant, one intake can feed several plants, a plant can feed several delivery areas. Shares belong on the **links** (intake → plant, plant → delivery area), not on the intake alone.
 
 ---
@@ -93,7 +97,7 @@ If `share_alloc` is relative to the system's served population:
 - Municipalities with no surface intake (wells only, or transfers with no mapped catchment) **still get a row**, with `geometry = NULL`, so `municipio_code` is a complete key across roughly 5,570 municipalities and "no polygon" differs from "not processed". Add a flag (`has_surface_intake` or `source_mix`) stating the reason.
 - Derived attributes worth storing: `n_intakes`, `n_parts` (`n_parts > 1` flags disjoint cases), `area_total`, optionally topology with its reference date, and optionally the share of the largest intake.
 - Holes: catchments have none, so a hole in the dissolve is a gap between neighbouring catchments (an area enclosed by catchments drains through them). Every hole is filled.
-- Transfers: include transferred intakes' catchments in the dissolve and flag the row `has_transfer`, so "provisioning area" means everything that physically feeds the city.
+- Transfers: the source catchments of the transfers reaching the city's intakes (`catchments_transfers`, joined on the target `intake_code`) are included in the dissolve, so "provisioning area" means everything that physically feeds the city. `n_intakes_transfer` counts the source intakes that are not already linked to the city, `n_transfer_areas` the drawn polygons (both 0 without transfer). `n_intakes_surface`, `source_mix` and `topology` keep describing the city's own intakes.
 
 ### `provisioning_area_within` (derived)
 - The provisioning area clipped to the municipality's own polygon, one row per municipality, parts under 0.01 km² dropped (border slivers).
@@ -123,6 +127,6 @@ intake (outlet) -> catchment (1 per surface intake) -> provisioning_area (1 per 
 
 - Does Atlas Águas give the population share per **intake** or per **system**? This decides whether the intake → plant links must be reconstructed.
 - Confirm that `share_alloc` is a share of the served population (sums to 100%), not of the total municipal population.
-- Representation of **transfers** (link table with origin intake, destination system, conveyance type).
+- ~~Representation of **transfers**~~: answered: layer `catchments_transfers`, one row per target and source intake (JSON list) or per drawn polygon (no source intake). Still open: conveyance type and shares per source.
 - Formal treatment of **shared systems** (one system, several cities, share matrix as a many-to-many relation).
 - Final field names for the intake, system and provisioning-area tables.

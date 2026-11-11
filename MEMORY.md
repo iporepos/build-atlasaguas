@@ -343,3 +343,115 @@ History before this repo: `Bench/MEMORY.md`, entries 2026-10-05, 2026-10-21 and 
   full_label_ratio gone). Aqueduct status families (user ok): Existente -> Operando colors, Em Projeto / Em Estudo /
   Em Licitação / Emergencial -> Planejado colors, each keeps its own subheader (AQ_STATUS_FAMILY, override
   aqueducts.status_family); shades counted over the family. NOT tested (user asked to skip testing); compiles only.
+
+## 2026-11-11 - Transfers between intakes, case A (prompts/PLAN_catchments_transfers.md)
+- build_database.py: build_transfers() (after build_tables) reads INTAKES-TRANSFERS.json from the T1 folder (config
+  `transfers`, optional; no file -> empty layer) {source: [targets]}, validates (object of non-empty string lists,
+  duplicated source key via object_pairs_hook, duplicated pair, self-link, chain = code both source and target, unknown
+  code, not Superficial, no catchment; all listed in one stop message) and writes the new spatial layer
+  catchments_transfers (transfer_id 1..n by (source, target), intake_code = TARGET, source_intake_code nullable for
+  case B, catchment_area_km2/n_parts/geometry copied from catchments). build_provisioning: dissolve over codes + extra
+  (sources of the linked targets minus the linked codes); n_intakes_transfer = len(extra); bounds check over the same
+  set; topology/source_mix/n_intakes_surface unchanged; transfer overlap computed outside relation() (its cache is the
+  partial-overlaps report). transfers_check.csv report. main(): schema `uniques` of spatial layers now unique-indexed
+  (ux_catchments_transfers_intake_code_source_intake_code).
+- Schema: catchments_transfers after catchments (FKs to intakes on both codes, CHECKs n_parts >= 1 and no self-link);
+  provisioning_areas.n_intakes_transfer after n_intakes_system_only + 2 CHECKs; n_intakes_surface description updated.
+  Docs: module docstring (16 tables: 8 plain + 8 spatial), example config, README section, nomenclature sections 3/7/10,
+  zenodo html (16 data tables, layer, version line "[version to confirm]" at the top). publish.py: *.json not skipped
+  (JSON goes into the T1 zip). synthesis_municipios.py picks n_intakes_transfer up from `fields` (no change needed).
+- Tested in scratch (T1 symlinked, catchments copied), 27 s per build: (1) no JSON vs HEAD build: every table/layer/view
+  and every report identical, only the new empty layer, n_intakes_transfer = 0 and the catalogs differ. (2) JSON
+  Assaré -> Potengi + Araripe, Altaneira -> Araripe + Aurora (CE), Areado's own 2nd intake -> its 1st (MG): only the 3 CE
+  rows change in provisioning_areas(_within); Araripe 109 -> 721 km2, independent dissolve matches (0.16 km2 = 16 filled
+  holes), n_intakes_transfer 2/1/1. (3) copies byte-identical to catchments; after a revise_catchments replace of
+  Altaneira (60.9 -> 38.1 km2) the copies and dissolves follow. (4) 11 negative cases stop with clear messages.
+  (5) FKs, unique indexes, CHECKs, verify_spatial, columns pass. (6) Areado: n_intakes_transfer 0, area unchanged.
+- Effect told to the user (open point 1): source intake points fall inside the target city's area and count as
+  upstream (Araripe/Aurora: 1 upstream intake, 4,448 people). Scope exception (new layer + column) and the Zenodo
+  version number left to the user. The user must create the real JSON in T1 and rebuild T2. Not committed.
+- Case B (2026-11-11, user: name CATCHMENTS-TRANSFERS.gpkg, no fingerprints, overlap warning ok; count column
+  explained, decision pending): T1 GeoPackage (config transfer_areas), layer catchments_transfers, intake_code (target)
+  + optional note, any CRS. read_transfer_areas(): reproject to the catchments CRS, revise_catchments.clean, geodesic
+  area, n_parts; source_intake_code NULL, after case A rows in file order; T2 layer got a nullable `note` column.
+  Stops: missing layer/column/CRS, feature without code, target not surface/with catchment, no polygon left, target
+  that is a case A source. Dissolve: drawn polygons of the city's targets (deduped by transfer_id) added, bounds check
+  includes their area_crs area; NOT counted in n_intakes_transfer (count column to decide). transfers_check.csv now per
+  row with transfer_id (overlap with the target catchment for drawn ones).
+  Scratch: 7 polygons (UTM input, one shared by 2 cities, one shared by both Barroso intakes -> +12.49 km2 once, a bow
+  tie -> repaired, 2 parts, one over Potengi's own catchment -> overlap 1.0 in the report): only the 4 target cities
+  change, Potengi equals an independent dissolve exactly; 9 negative cases stop; build without both files: only case A
+  rows differ from the case-A build.
+- Renamed (2026-11-11, user): config keys transfers_intakes / transfers_catchments, files TRANSFERS-INTAKES.json /
+  TRANSFERS-CATCHMENTS.gpkg (both optional; input layer still catchments_transfers). Scratch build with the new names:
+  same 12 rows and report as before.
+- (2026-11-11, user yes to both) Input layer renamed transfers_catchments (inside TRANSFERS-CATCHMENTS.gpkg; the old
+  name stops the build: "layer transfers_catchments not found"). New provisioning_areas.n_transfer_areas (after
+  n_intakes_transfer, NOT NULL, CHECKs >= 0 and 0 without surface intake): drawn polygons in the dissolve, identical
+  geometries (normalized WKB) drawn for two targets of the same city counted once (Barroso: 1, was 2 per feature).
+  Scratch: Araripe 2/1, Aurora 1/2, Potengi 1/2, Barroso 0/1; areas unchanged; synthesis CSV picks the column up.
+  Docs (README, nomenclature, zenodo, schema descriptions) updated.
+- Relevant aqueducts (2026-11-11, user): plot_municipio_check.py reads the whole T2 aqueducts layer (aqueducts.where),
+  relevant = every line whose aqueduct_name (= system; 426 names / 443 lines, repeats are real multi-part systems) has a
+  line intersecting the municipality polygon or one of its catchments. Their extent is added to the frame in both modes
+  (aqueducts.extend_frame, default true; zoom: before zoom_buffer); zoom mode colors + map legend only for them, the
+  others light magenta (full_view_alpha) like the full view; panel entry "Aqueduct (n)" now in both modes.
+  aqueducts.relevant false = off. Scratch (6 capitals, both modes): BH zoom good (131.9 x 111.3 km, 7 systems). Issue
+  reported, decision pending: long systems crossing large catchments without supplying the city (Recife, Maceió:
+  Adutora do Agreste, Sistema Integrado do Agreste/Garanhuns) blow the frame up to Maceió/Arapiraca; and in zoom the 20%
+  buffer applied after adding the aqueducts makes the zoom frame larger than the default (Fortaleza, Natal, João
+  Pessoa, Recife, Maceió fall back to the default frame).
+- (2026-11-11, user chose) Relevance narrowed: municipality polygon OR within aqueducts.intake_km (2) of a linked intake
+  point (ESRI:102033); catchments no longer used. Zoom: zoom_buffer applied to the intake/municipality box first, then
+  the relevant aqueduct extent added with the default margin (0.04) only when it reaches out. Recife zoom 96.9 x 81.7 km
+  (8 systems; was ~183,000 km2 with the catchment rule), Maceió 62.8 x 53.0 (3), BH 115.9 x 97.8 (7), João Pessoa
+  77.2 x 65.1 (1); Fortaleza zoom = default (Acarape do Meio-Gavião line). Capitals scratch: 27/27 both modes, zoom
+  21 zoomed / 6 default kept. Configs unchanged (defaults).
+- Minor direct intakes (2026-11-11, user; plots only, T2 unchanged): plot_municipio_check.py minor_direct (default
+  true): linked intakes with link_source direct in a municipality that has systems_supply rows with covered_percent > 0
+  (so none for the intake's systems) -> gray (#9a9994) point with the dark ring, label in gray (zoom), legend "Minor
+  direct intake (n)", catchment not drawn, excluded from the frame, the relevant-aqueduct search and the intake counts.
+  New configs plots/plot_municipio_check_rio_zoom.{local,example}.json (3304557, zoom, output municipio_checks).
+  Scratch Rio zoom: Imunana (IN06731581370495001) is the minor one; frame now Guandu + Lajes only (default kept, 10,667
+  km2); the Imunana point lies outside the frame (legend says 1 but nothing drawn). Panel values (provisioning area
+  3,635 km2, topology M-X / 2, upstream 18) still come from T2 and include the Imunana catchment. Only Rio tested.
+- Transfers in the plots (2026-11-11, user): plot_municipio_check.py `transfers` (default true) reads T2
+  catchments_transfers when the gpkg has it: rows whose target is a linked, non-minor intake, sources linked to the
+  municipality left out, a polygon reached through two targets drawn once (source code / identical WKB). "Transfer
+  catchment" #c9d43a (alpha +0.1), dashed #7c8a14 edge, zorder 1.9 under the catchments; source intakes "Transfer
+  intake" #a4b81c points with the dark ring, labelled in zoom (#7c8a14). Both always in the side legend, also 0. Frame:
+  points = linked + minor + transfer intakes (both modes); the full frame also gets the transfer catchments; minor
+  points now in both frames. Other intakes exclude the transfer intakes. Scratch: Araripe full + zoom on the scratch T2
+  with transfers (3 transfer catchments incl. 1 drawn, 2 transfer intakes); Rio zoom on the real T2 (which already has
+  the empty catchments_transfers layer: legend 0/0; Imunana gray point now in the frame at the right edge, default
+  frame kept, label clipped by the edge).
+- (2026-11-11, user) Side legend: bold gray "Intakes" subheader (handle.subheader flag, bolded in side_panel), then
+  Surface (n), Surface - minor (n), Surface - transfer (n), Groundwater (n) (all always listed), Surface (others),
+  Groundwater (others). Checked on Rio zoom only.
+- (2026-11-11, user) Side legend: "Catchments" subheader with Local (n) and Transfer (n), right after the Intakes group;
+  a blank spacer ends each group; Aqueduct and the context layers follow ungrouped. Checked on Rio zoom only.
+- (2026-11-11, user) Legend subheaders (side legend Intakes/Catchments and the zoom aqueduct legend statuses): dark ink
+  (#0b0b0b) instead of ink2, moved left over the empty handle (subheader(): ScaledTranslation of (handlelength +
+  handletextpad) x fontsize) so they align with the symbols. Checked on Rio zoom.
+- (2026-11-11, user) Side legend last block reordered: Municipal seat, Municipality, Other municipalities, Urban area, Water body, Ocean, Aqueduct, Drainage. Checked on Rio zoom.
+- (2026-11-11, user) Intakes legend: Surface - transfer now above Surface - minor (compile check only).
+- (2026-11-11, user) Transfer catchment edge solid (was dashed), map and legend (compile check only).
+- (2026-11-11, user) Side legend: aqueduct count dropped (window artifact, like the other intakes): entry is just "Aqueduct" (log line keeps the count). Compile check only.
+- Case C transfers (2026-11-11, user): TRANSFERS-INTAKES.json may hold "catchments_only": {source: [targets]} = only the
+  source catchment counts (e.g. it feeds an open channel of a transfer aqueduct), the intake point is not relevant.
+  New catchments_transfers.transfer_type NOT NULL: intake (A) / catchment (C) / polygon (B), CHECKs on the values and
+  (polygon) = (source NULL); ids A, then C (each by source, target), then B. Dissolve: C sources (not linked, not already
+  an A source of the city) added; n_intakes_transfer = A only; n_transfer_areas = C + drawn. transfers_check.csv has
+  transfer_type. Plot: transfer intake points only for transfer_type intake (fallback: source not null on older T2).
+  Validation: pair in both A and C, catchments_only not an object / empty list, repeated key in any object, chains
+  across A/C/B. Scratch: Assaré C -> Aurora (+551 km2), Bom Sucesso C -> Potengi (+19.4 km2); n_transfer_areas 3/3,
+  n_intakes_transfer unchanged; Potengi map: 1 transfer intake (Assaré), 4 transfer catchments. README, nomenclature,
+  zenodo, schema descriptions updated.
+- (2026-11-11) Chain rule relaxed for case C: only a case A source that is also a target (any kind) stops the build; a
+  catchments_only source may be a target elsewhere (only its own catchment is copied). Drawn-polygon targets must not
+  be case A sources. Needed by the user's real T1 JSON: Santa Cecília (IN06751861361611001) -> Parque Santana, Piraí,
+  Guandu (A) + catchments_only Parque Santana (IN06747761361967001, 716.7 km2) -> Guandu: validates (4 rows). Not built
+  on the real T2 (user rebuilds).
+- (2026-11-11, user) Transfer intake points purple #7b3fa0 (dark ring kept), zoom labels in the same purple. Checked on Araripe zoom (scratch T2).
+- (2026-11-11, user) Intake labels (zoom) no longer colored: all kinds (surface, transfer, minor) in dark ink #0b0b0b, bold 5.5 pt, white halo. Checked on Araripe zoom.
+- 2026-11-11: added plots/plot_municipio_check_sul{,_zoom}.local.json (Curitiba, Florianópolis, Porto Alegre; full and zoom), copies of the capitals configs with the same output folder. Not run.

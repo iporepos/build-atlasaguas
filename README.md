@@ -102,6 +102,54 @@ Before reading T1, the build checks the catchments against their fingerprints. *
 
 The fingerprints table stays in T1. It is not copied to T2.
 
+### Transfers between intakes (optional)
+
+Some intakes take water from a river that also receives water from another river through a pipe or canal. The
+provisioning area of the city must then include the catchment of the **source** river too. When the source is an
+official intake of the Atlas, list it in `TRANSFERS-INTAKES.json` in the T1 folder (config key `transfers_intakes` changes
+the file name). One key per source intake, with the list of the target intakes it feeds:
+
+```json
+{
+  "IN08304511400594001": ["IN08291861399164001", "IN08292001398220001"],
+  "IN08303171402724001": ["IN08292001398220001"],
+  "catchments_only": {
+    "IN06898911352570001": ["IN08291861399164001"]
+  }
+}
+```
+
+Top-level entries are transfers between intakes: the source intake is relevant (case A, `transfer_type` `intake`).
+Entries under `catchments_only` use only the source catchment, because the intake point itself plays no part, for
+example a catchment that feeds an open channel of a transfer aqueduct (case C, `transfer_type` `catchment`). Both kinds
+copy the catchment the same way; they differ in the counts and the maps: the source of case A counts in
+`n_intakes_transfer` and is drawn as a transfer intake, the source of case C counts in `n_transfer_areas` and gets no point.
+
+At every build:
+- the layer `catchments_transfers` gets one row per (target, source) pair, with a **copy** of the source catchment
+  (a later catchment revision reaches the copies at the next build). `intake_code` is the target, the intake that
+  receives the water;
+- the provisioning area of each municipality linked to a target also includes the source catchments;
+  `n_intakes_transfer` counts the case A sources that are not already linked to it, `n_transfer_areas` the case C
+  catchments and the drawn polygons;
+- `transfers_check.csv` in the report folder lists each pair with both areas, their overlap and the target's
+  municipalities. A high overlap suggests the two intakes are on the same river, not a real transfer.
+
+When no official intake exists at the source (for example a reservoir chain), draw the area as a polygon in
+`TRANSFERS-CATCHMENTS.gpkg` in the T1 folder (config key `transfers_catchments`), layer `transfers_catchments`: one
+feature per target, with the column `intake_code` (the target intake), an optional free-text `note`, any CRS. A polygon
+that feeds two targets is drawn twice. At every build each polygon is reprojected, cleaned like a catchment revision
+and measured (geodesic area, `n_parts`), then added to the layer with `source_intake_code` empty (`transfer_type` `polygon`, case B) and included
+in the provisioning areas of the target's municipalities, where `n_transfer_areas` counts them. Edit the file freely: it is read again at every build, with no
+fingerprints. The build stops on a missing layer, column or CRS, an unknown or groundwater target, a target without a
+catchment, a feature with no polygon, or a target that is also a case A source in the JSON.
+
+Transfers are not followed in chains: a code that is both a case A source and a target stops the build. If C receives
+water from B, and B from A, write both sources for C. A `catchments_only` source may be a target elsewhere: only its
+own catchment is copied, nothing that reaches it. A drawn polygon's target must not be a case A source either. The build also stops on an unknown code, a groundwater intake, an intake
+without a catchment, a self-link, a pair listed twice (also once at the top and once in `catchments_only`) or a key repeated in one object. Without the file the layer is empty.
+The catchments themselves never change: a catchment is one outlet, one polygon.
+
 ### 4. Publish
 
 ```

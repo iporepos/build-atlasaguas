@@ -1,0 +1,68 @@
+{
+ "gpkg": "/path/to/folder/ANA_ATLASAGUAS_DB_BRAZIL_2021.gpkg",
+ "municipios": [
+  "3304557"
+ ],
+ "output_folder": "/path/to/folder/municipio_checks",
+ "zoom": "intakes",
+ "minor_direct": true,
+ "zoom_buffer": 0.2,
+ "zoom_max_ratio": 3,
+ "zoom_min_km": 10,
+ "intake_label": [
+  "intake_name",
+  "intake_tradename"
+ ],
+ "drainage": {
+  "path": "/vsizip//path/to/folder/HydroRIVERS_v10_sa_shp.zip/HydroRIVERS_v10_sa_shp/HydroRIVERS_v10_sa.shp",
+  "linewidth": 0.25,
+  "column": "UPLAND_SKM",
+  "scale": "log",
+  "cmap": "Blues",
+  "cmap_range": [
+   0.35,
+   1.0
+  ],
+  "linewidth_range": [
+   0.2,
+   0.6
+  ],
+  "cut": {
+   "column": "UPLAND_SKM",
+   "min_spacing_mm": 4
+  },
+  "max_reaches": 20000
+ },
+ "ocean": {
+  "path": "/path/to/folder/ne_10m_ocean.shp",
+  "grow_km": 2
+ },
+ "aqueducts": {
+  "color": "#d6198f",
+  "linewidth": 0.8
+ },
+ "other_intakes": true,
+ "countries": {
+  "path": "/path/to/folder/natearth_south_america.gpkg|layername=ne_10m_admin_0_countries",
+  "label": "SOVEREIGNT",
+  "filter": [
+   "Brazil"
+  ]
+ },
+ "dpi": 300,
+ "urban_areas": {
+  "path": "/path/to/folder/bc250_db.gpkg|layername=lml_area_densamente_edificada_a",
+  "color": "#814446"
+ },
+ "water_bodies": {
+  "path": "/path/to/folder/bc250_db.gpkg|layername=hid_massa_dagua_a",
+  "marine": {
+   "column": "tipomassadagua",
+   "values": [
+    "Baía",
+    "Oceano",
+    "Enseada"
+   ]
+  }
+ }
+}

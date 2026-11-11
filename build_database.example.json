@@ -4,6 +4,8 @@
  "report_folder": "/path/to/folder",
  "catalog_layers": "ANA_ATLAS-AGUAS_LAYERS_X_X.csv",
  "schema": "build_database_schema.json",
+ "transfers_intakes": "TRANSFERS-INTAKES.json",
+ "transfers_catchments": "TRANSFERS-CATCHMENTS.gpkg",
  "provisioning": {
   "area_crs": "ESRI:102033",
   "nested_threshold": 0.5,

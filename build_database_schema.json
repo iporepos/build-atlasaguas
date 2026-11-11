@@ -942,10 +942,113 @@
   }
  },
  {
+  "name": "catchments_transfers",
+  "kind": "spatial",
+  "description_pt": "Bacias de transferência: áreas cuja água é transferida (adutora, canal) para o rio de uma captação (destino). Dois casos: a bacia de uma captação oficial de origem (cópia de catchments, refeita a cada construção; uma linha por par destino-origem) ou um polígono desenhado sem captação oficial na origem (source_intake_code vazio). Entram no dissolve da área de provisão dos municípios ligados à captação de destino. Não recursivo: só os pares declarados",
+  "description_en": "Transfer catchments: areas whose water is transferred (pipe, canal) into the river of an intake (target). Two cases: the catchment of an official source intake (copy from catchments, redone at every build; one row per target-source pair) or a drawn polygon without an official intake at the source (source_intake_code empty). Added to the provisioning-area dissolve of the municipalities linked to the target intake. Not recursive: only the declared pairs",
+  "columns": [
+   {
+    "name": "transfer_id",
+    "type": "INTEGER",
+    "not_null": true,
+    "unit": "",
+    "description_pt": "Identificador da transferência (1..n: primeiro as do tipo intake, depois catchment, cada um ordenado por source_intake_code, intake_code; por fim os polígonos desenhados, na ordem do arquivo)",
+    "description_en": "Transfer identifier (1..n: first the intake kind, then catchment, each ordered by source_intake_code, intake_code; last the drawn polygons, in file order)"
+   },
+   {
+    "name": "intake_code",
+    "type": "TEXT",
+    "not_null": true,
+    "unit": "",
+    "description_pt": "Captação de destino, que recebe a água (em catchments, intake_code é o exutório da bacia; aqui é a captação que recebe a água)",
+    "description_en": "Target intake, which receives the water (in catchments, intake_code is the outlet of the catchment; here it is the intake that receives the water)"
+   },
+   {
+    "name": "source_intake_code",
+    "type": "TEXT",
+    "not_null": false,
+    "unit": "",
+    "description_pt": "Captação cuja bacia é copiada (tipos intake e catchment; vazio para polígonos desenhados)",
+    "description_en": "Intake whose catchment is copied (kinds intake and catchment; empty for drawn polygons)"
+   },
+   {
+    "name": "transfer_type",
+    "type": "TEXT",
+    "not_null": true,
+    "unit": "",
+    "description_pt": "Tipo: intake = bacia e captação de origem (a captação de origem é relevante); catchment = só a bacia de origem (ex.: alimenta um canal aberto de uma adutora de transferência; a captação em si não é relevante); polygon = polígono desenhado, sem captação de origem",
+    "description_en": "Kind: intake = source catchment and source intake (the source intake is relevant); catchment = the source catchment only (e.g. it feeds an open channel of a transfer aqueduct; the intake itself is not relevant); polygon = drawn polygon, no source intake"
+   },
+   {
+    "name": "catchment_area_km2",
+    "type": "REAL",
+    "not_null": false,
+    "unit": "km2",
+    "description_pt": "Área da bacia de origem ou do polígono desenhado (geodésica, elipsoide WGS84)",
+    "description_en": "Area of the source catchment or of the drawn polygon (geodesic, WGS84 ellipsoid)"
+   },
+   {
+    "name": "n_parts",
+    "type": "INTEGER",
+    "not_null": true,
+    "unit": "",
+    "description_pt": "Número de polígonos da bacia de origem ou do polígono desenhado",
+    "description_en": "Number of polygons of the source catchment or of the drawn polygon"
+   },
+   {
+    "name": "note",
+    "type": "TEXT",
+    "not_null": false,
+    "unit": "",
+    "description_pt": "Observação livre sobre o polígono desenhado (vazio nas transferências entre captações)",
+    "description_en": "Free note on the drawn polygon (empty for transfers between intakes)"
+   }
+  ],
+  "primary_key": [
+   "transfer_id"
+  ],
+  "foreign_keys": [
+   {
+    "columns": [
+     "intake_code"
+    ],
+    "ref_table": "intakes",
+    "ref_columns": [
+     "intake_code"
+    ]
+   },
+   {
+    "columns": [
+     "source_intake_code"
+    ],
+    "ref_table": "intakes",
+    "ref_columns": [
+     "intake_code"
+    ]
+   }
+  ],
+  "checks": [
+   "n_parts >= 1",
+   "source_intake_code IS NULL OR source_intake_code <> intake_code",
+   "transfer_type IN ('intake','catchment','polygon')",
+   "(transfer_type = 'polygon') = (source_intake_code IS NULL)"
+  ],
+  "uniques": [
+   [
+    "intake_code",
+    "source_intake_code"
+   ]
+  ],
+  "geometry": {
+   "column": "geom",
+   "type": "MultiPolygon"
+  }
+ },
+ {
   "name": "provisioning_areas",
   "kind": "spatial",
-  "description_pt": "Áreas de provisão: dissolve das bacias de todas as captações que abastecem o município (provisioning_links: ligação direta da captação ou via sistema; nunca por interseção espacial). Uma linha por município, geometria nula sem captação superficial (source_mix explica); buracos do dissolve (frestas entre bacias vizinhas) preenchidos; áreas de municípios que compartilham captações se sobrepõem (não somar)",
-  "description_en": "Provisioning areas: dissolve of the catchments of all intakes supplying the municipality (provisioning_links: direct intake link or through the system; never by spatial intersection). One row per municipality, null geometry without surface intake (source_mix says why); dissolve holes (gaps between neighbouring catchments) filled; areas of municipalities sharing intakes overlap (do not sum)",
+  "description_pt": "Áreas de provisão: dissolve das bacias de todas as captações que abastecem o município (provisioning_links: ligação direta da captação ou via sistema; nunca por interseção espacial), mais as áreas de transferência que chegam às suas captações (catchments_transfers: bacias de captações de origem e polígonos desenhados). Uma linha por município, geometria nula sem captação superficial (source_mix explica); buracos do dissolve (frestas entre bacias vizinhas) preenchidos; áreas de municípios que compartilham captações se sobrepõem (não somar)",
+  "description_en": "Provisioning areas: dissolve of the catchments of all intakes supplying the municipality (provisioning_links: direct intake link or through the system; never by spatial intersection), plus the transfer areas reaching its intakes (catchments_transfers: catchments of source intakes and drawn polygons). One row per municipality, null geometry without surface intake (source_mix says why); dissolve holes (gaps between neighbouring catchments) filled; areas of municipalities sharing intakes overlap (do not sum)",
   "columns": [
    {
     "name": "municipio_code",
@@ -976,8 +1079,8 @@
     "type": "INTEGER",
     "not_null": true,
     "unit": "",
-    "description_pt": "Captações superficiais ligadas (= bacias dissolvidas)",
-    "description_en": "Linked surface intakes (= dissolved catchments)"
+    "description_pt": "Captações superficiais ligadas (= bacias dissolvidas, sem contar as de transferência: n_intakes_transfer, n_transfer_areas)",
+    "description_en": "Linked surface intakes (= dissolved catchments, transfer catchments not counted: n_intakes_transfer, n_transfer_areas)"
    },
    {
     "name": "n_intakes_groundwater",
@@ -994,6 +1097,22 @@
     "unit": "",
     "description_pt": "Captações ligadas só via sistema (ausentes do cadastro de municípios da captação; típico de sistemas integrados)",
     "description_en": "Intakes linked only through the system (absent from the intake's own municipality list; typical of integrated systems)"
+   },
+   {
+    "name": "n_intakes_transfer",
+    "type": "INTEGER",
+    "not_null": true,
+    "unit": "",
+    "description_pt": "Captações de origem de transferências do tipo intake (catchments_transfers) cuja bacia foi somada ao dissolve e que não estão ligadas ao município; 0 sem transferência. Não entram em n_intakes_surface, source_mix nem topology",
+    "description_en": "Source intakes of transfers of kind intake (catchments_transfers) whose catchment was added to the dissolve and that are not linked to the municipality; 0 without transfer. Not counted in n_intakes_surface, source_mix or topology"
+   },
+   {
+    "name": "n_transfer_areas",
+    "type": "INTEGER",
+    "not_null": true,
+    "unit": "",
+    "description_pt": "Áreas de transferência sem captação de origem relevante somadas ao dissolve: bacias do tipo catchment (não ligadas ao município) e polígonos desenhados (geometrias idênticas desenhadas para duas captações contam uma vez); 0 sem elas",
+    "description_en": "Transfer areas without a relevant source intake added to the dissolve: catchments of kind catchment (not linked to the municipality) and drawn polygons (identical geometries drawn for two targets count once); 0 without them"
    },
    {
     "name": "n_parts",
@@ -1058,7 +1177,11 @@
    "n_intakes_surface_upstream >= 0",
    "covered_population_urban_upstream_2020 >= 0",
    "(n_intakes_surface > 0) = (n_intakes_surface_upstream IS NOT NULL)",
-   "(n_intakes_surface_upstream IS NULL) = (covered_population_urban_upstream_2020 IS NULL)"
+   "(n_intakes_surface_upstream IS NULL) = (covered_population_urban_upstream_2020 IS NULL)",
+   "n_intakes_transfer >= 0",
+   "(n_intakes_surface > 0) OR (n_intakes_transfer = 0)",
+   "n_transfer_areas >= 0",
+   "(n_intakes_surface > 0) OR (n_transfer_areas = 0)"
   ],
   "uniques": [],
   "geometry": {
