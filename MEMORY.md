@@ -251,3 +251,95 @@ History before this repo: `Bench/MEMORY.md`, entries 2026-10-05, 2026-10-21 and 
 - Fix: draw() helper skips empty layers (geopandas hands an empty frame to pandas: "no numeric data to plot";
   Fortaleza 10 km frame had no seat).
 - Zoom falls back to the default frame when its frame (after aspect growth) is not smaller in area (both LAEA, equal-area) - make_frame() builds both. Capitals: 14 zoomed, 13 default (Natal, João Pessoa, Recife, BH, Vitória, Rio, SP, Curitiba, Florianópolis, Campo Grande, Brasília...): intakes spread, 5x too wide.
+- Drainage declutter by map scale (2026-11-11): max_reaches counted reaches, which depends on how HydroRIVERS splits
+  the network, not on what fits on the map. New drainage.cut {column (UPLAND_SKM), min_spacing_mm | value_ref+ref_km+
+  exponent | table [[frame_km, value]] + interp loglog/loglin}: reaches below a threshold that grows with the frame width
+  are dropped (cut_threshold()). min_spacing_mm: area = area_factor x (s x ground km per paper mm)^2 (map 230 mm wide).
+  max_reaches is now only a guard (default 0 with a cut, 2000 without). "scale": "log" for color/width (UPLAND_SKM).
+  Calibration (scratch, s = 2/3/4 mm): Fortaleza zoom 12 km and Caxias 80 km keep all (below the HydroRIVERS 10 km2
+  floor); POA 482 km 10,649/7,548/5,972 of 19,127; Aracaju 1,935 km 30,943/21,835/16,959 of 138,714. Same look on
+  POA and Aracaju at 4 mm (exponent 2 holds); 2 mm busy at print size. Chosen: 4 mm, max_reaches 20000.
+  Configs updated: capitals + capitals_zoom (local + example), main example. The user kept the main local on ORD_STRA /
+  max_reaches 10000.
+- Optional countries layer (2026-11-11, user spec): Natural Earth 10m admin_0 (natearth_south_america.gpkg, EPSG:4326),
+  deepest (zorder -1, below the municipalities), fill #e6e5e0, edge #a9a8a3 0.5 pt; names from label column
+  (SOVEREIGNT) in light italic caps at the representative point of the part in the frame, only if >= 1% of the frame
+  (label_min_fraction); filter = label values left OUT (["Brazil"]). Credit line, no legend entry. Added to all 6
+  configs. Scratch: Uruguaiana (Argentina, Paraguay, Uruguay), Foz, Corumbá (Bolivia, Paraguay), Aracaju (none) fine.
+  NE vs IBGE border mismatch leaves thin slivers (acceptable in the background). Bug caught: loop var `name` shadowed
+  the municipio name (files came out *_PARAGUAY.jpeg) - renamed.
+- Optional ocean layer (2026-11-11, user): Natural Earth ne_10m_ocean.shp (one global polygon, no spatial index):
+  read_in_frame(clip=True) cuts it to the frame bbox in EPSG:4326 before projecting (the local LAEA cannot take the
+  whole world). Very bottom (zorder -2), #dce9f2 (paler than inland water), no edge. grow_km (2): buffered into land
+  (hidden under municipalities/countries) to fill gaps where the IBGE coast lies seaward of the 1:10m one; Florianópolis
+  still has one small sliver S of Palhoça (3 km would cover it). Legend "Ocean" + credit.
+- water_bodies.marine {column tipomassadagua, values Baía/Oceano/Enseada}: BC250 bays drawn in the ocean color, no edge,
+  at the water-body level (they cover municipality fills reaching into the bays). Laguna stays inland. Florianópolis
+  bays, Guanabara OK. Both keys added to all 6 configs. Scratch tests: Aracaju, Florianópolis, Rio, Uruguaiana,
+  Fortaleza zoom, Brasília (inland, no ocean).
+- Zoom mode reworked (2026-11-11, user): frame = union of the municipality bounds (core parts) and the square on the
+  intake points (side = their larger side, centred) + zoom_buffer (0.2) x the larger side of that union on EACH side
+  (zoom_scale / zoom_min_km removed). Fallback to the default frame kept when the zoom frame is not smaller. Zoom mode
+  (also on fallback): file name <code>_<NAME>_ZOOM.jpeg, surface intakes labelled (intake_label, default intake_code:
+  names repeat/are often NULL), blue bold 5.5 pt, white halo. skip_existing now mode-aware (zoom/default can share a
+  folder). Intakes are MultiPoint: label at the centroid (first run crashed on .x). Capitals scratch: 27/27, 36 s;
+  19 zoomed (Fortaleza 42 km ... Porto Velho 704 km, huge municipality), 8 default kept (Palmas, Natal, João Pessoa,
+  SP, Florianópolis, Campo Grande, Brasília...): catchments small, default 4% margin tighter. BH labels cluster
+  south of the city (accepted by the user).
+- Zoom rule v3 (2026-11-11, user): intake square (side = larger side of the intake bounds) joined with the municipality
+  bounds unless the municipality's larger side > zoom_max_ratio (3) x the square side -> square alone, floored at
+  zoom_min_km (10; floor applied ONLY to the square-alone case: applied to the union it pushed Fortaleza to the default
+  frame). Then zoom_buffer 0.2 per side. Labels: intake_name (user), code only when the name is empty. Capitals scratch
+  27/27: intakes only for Porto Velho, Rio Branco, Manaus, Boa Vista, Belém, Macapá, Teresina, Fortaleza, Campo Grande,
+  Cuiabá (mostly 16.6 x 14 km = 10 km floor + buffer + aspect); 7 default kept (Palmas, Natal, João Pessoa, SP,
+  Florianópolis, Brasília...). Names repeat within a system (BH: 3x "Integrado - Paraopeba").
+- (2026-11-11, user) Aqueducts: T2 layer `aqueducts` (443 lines, all statuses incl. planned: Operando 217, Existente
+  64, Em Projeto 57, Em Obras 49, Planejado 38...; filter with aqueducts.where), magenta #d6198f 0.8 pt, zorder 3.2
+  (above drainage, below seats); legend "Aqueduct (n)". Other intakes (other_intakes, default true): intakes in the
+  frame not in provisioning_links of the municipality, 10 pt area, no border, darker colors (surface #174a8c,
+  groundwater #a4520c), zorder 3.8 under the linked ones; legend with counts. Panel: italic "full view" / "zoom view"
+  under the title (the frame actually used: a zoom run that falls back says "full view"); metropolitan region dropped.
+  Added to all 6 configs. Scratch: Fortaleza, BH, Salvador in both modes OK (BH zoom: 7 aqueducts, 80 other intakes).
+- Zoom intake labels "name - tradename" (2026-11-11, user): intake_label = column or list (default ["intake_name",
+  "intake_tradename"]), joined " - ", empty/repeated (case-insensitive) values dropped, code when all empty. T2: 631 of
+  18,252 intakes without tradename, 38 equal to the name. BH labels now distinct ("Integrado Ibirité - Bálsamo"...),
+  still overlapping in the Ibirité/Catarina cluster (accepted).
+- (2026-11-11) Legend: counts dropped from the other-intake entries (window artifact, user).
+- Intake contrast (2026-11-11, user): other intakes faded (other_alpha 0.4, same darker hues, legend too); linked
+  intakes stronger: surface #0a58ca (was #2a78d6), groundwater #f26b00 (was #ef7d1a), plus a dark ring (#1d1d1b,
+  point_ring 0.5 pt, drawn as a thicker dark edge under the white-edged point); legend markers with the dark edge.
+  Labels use the new surface blue. Checked on BH zoom (before/after crop).
+- (2026-11-11) Aqueducts faded 30% in the full view only (aqueducts.full_view_alpha 0.7; legend matches); zoom view opaque.
+- (2026-11-11, user) Other intakes: transparency dropped (close wells stacked into dark spots); light opaque colors
+  instead: surface_other #8fb0d6, groundwater_other #e3ad84 (other_alpha removed). Drawn under the seats now (zorder
+  3.3; a well hid the Sabará diamond), above the aqueducts.
+- (2026-11-11, user) Catchment borders stronger: #256b25 (was #3f8f3f), 0.7 pt (was 0.4; catchment_linewidth), legend matches.
+- Font (2026-11-11, user chose Fira): Fira Sans Regular/Bold/Italic/Medium .ttf + OFL.txt downloaded from the Google
+  Fonts repo into plots/fonts (not installed on the system); set_font() registers plots/fonts/*.ttf at start and sets
+  rcParams font.family = cfg "font" (default "Fira Sans"; DejaVu Sans with a log line if not found). Narrower than
+  DejaVu: labels/panel fit better. BH full + zoom OK with the current configs. plots/fonts must be committed with
+  the script (OFL allows redistribution with the licence).
+- (2026-11-11, user) "full view"/"zoom view" now follows the MODE (zoom config -> "zoom view" even when the default frame is kept; was the frame used). Aqueduct fade follows it too (faded only in full mode). Checked: Brasília zoom (fallback) says zoom view, BH full says full view.
+- Full-mode intake labels (2026-11-11, user): when the two modes' frames are close, the full view labels the surface
+  intakes like the zoom view: full frame width < full_label_ratio (2) x the zoom frame width (linear; zoom frame
+  computed quietly in full mode; 0 = never). Capitals: labels on for 9 (Palmas, Natal, João Pessoa, BH 1.3x, SP,
+  Curitiba, Florianópolis, Goiânia 1.5x, Brasília), off for 18 (Maceió 2.3x, Vitória 2.4x, Fortaleza/Recife 2.8x
+  the closest misses). 27/27 in scratch.
+- Zoom-mode aqueducts (2026-11-11, user): split by "status - name", one warm pastel per group (AQ_PALETTE, 8 colors,
+  cycled; the mauve #b5838d replaced by #e76f51: lost on the urban fill), linewidth_zoom 1.2, full opacity; list as an
+  in-map legend in the lower right corner, 4 rows (legend_rows), columns as needed, names wrapped at 40 chars, title
+  "Aqueducts (status - name)"; panel "Aqueduct (n)" entry dropped in zoom mode. aqueducts.split_zoom false = old
+  magenta. Full mode unchanged (magenta, faded). Capitals zoom 27/27 (9 frames without aqueducts); BH 7 systems,
+  Fortaleza 6 (incl. one "Em Projeto").
+- Zoom aqueducts v2 (2026-11-11, user): status is a hierarchy, not merged into the label. Color family per status
+  (AQ_STATUS_PALETTES): Operando magenta-purple, Em Obras reds, Planejado yellow-orange; other statuses gray
+  (AQ_OTHER_PALETTE); one tone per aqueduct name within its status. In-map legend "Aqueducts": status as bold gray
+  subheader (order Operando, Em Obras, Planejado, then others alphabetically), names only under it; 4 rows, filled
+  down, a subheader never ends a column (blank inserted). Config: status_palettes / other_palette overrides.
+  Capitals zoom 27/27. Open point told to the user: "Existente" (PR 10, RS 26, SC 21: the South's word for operating)
+  and "Em Projeto" (CE 36, PE 11) / Em Estudo / Em Licitação / Emergencial fall in gray as specified (Curitiba: all its
+  working systems gray).
+- (2026-11-11, user) Full-mode intake labels REMOVED again (full view stays clean; labels only in zoom mode;
+  full_label_ratio gone). Aqueduct status families (user ok): Existente -> Operando colors, Em Projeto / Em Estudo /
+  Em Licitação / Emergencial -> Planejado colors, each keeps its own subheader (AQ_STATUS_FAMILY, override
+  aqueducts.status_family); shades counted over the family. NOT tested (user asked to skip testing); compiles only.

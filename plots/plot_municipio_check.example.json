@@ -7,7 +7,8 @@
  "drainage": {
   "path": "/vsizip//path/to/folder/HydroRIVERS_v10_sa_shp.zip/HydroRIVERS_v10_sa_shp/HydroRIVERS_v10_sa.shp",
   "linewidth": 0.25,
-  "column": "ORD_STRA",
+  "column": "UPLAND_SKM",
+  "scale": "log",
   "cmap": "Blues",
   "cmap_range": [
    0.35,
@@ -17,8 +18,25 @@
    0.2,
    0.6
   ],
-  "max_reaches": 2000,
-  "tie_column": "UPLAND_SKM"
+  "cut": {
+   "column": "UPLAND_SKM",
+   "min_spacing_mm": 4
+  },
+  "max_reaches": 20000
+ },
+ "ocean": {
+  "path": "/path/to/folder/ne_10m_ocean.shp",
+  "grow_km": 2
+ },
+ "aqueducts": {
+  "color": "#d6198f",
+  "linewidth": 0.8
+ },
+ "other_intakes": true,
+ "countries": {
+  "path": "/path/to/folder/natearth_south_america.gpkg|layername=ne_10m_admin_0_countries",
+  "label": "SOVEREIGNT",
+  "filter": ["Brazil"]
  },
  "dpi": 300,
  "urban_areas": {
@@ -26,6 +44,10 @@
   "color": "#814446"
  },
  "water_bodies": {
-  "path": "/path/to/folder/bc250_db.gpkg|layername=hid_massa_dagua_a"
+  "path": "/path/to/folder/bc250_db.gpkg|layername=hid_massa_dagua_a",
+  "marine": {
+   "column": "tipomassadagua",
+   "values": ["Baía", "Oceano", "Enseada"]
+  }
  }
 }
