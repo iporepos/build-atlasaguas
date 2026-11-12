@@ -1,4 +1,7 @@
 {
+ "author": "Name (year). Institution",
+ "font": "helvetica",
+ "version": "1.0.0",
  "gpkg": "/path/to/folder/ANA_ATLASAGUAS_DB_BRAZIL_2021.gpkg",
  "municipios": "lists/capitals.txt",
  "output_folder": "/path/to/folder/municipio_checks/phase1_capitals",

@@ -455,3 +455,44 @@ History before this repo: `Bench/MEMORY.md`, entries 2026-10-05, 2026-10-21 and 
 - (2026-11-11, user) Transfer intake points purple #7b3fa0 (dark ring kept), zoom labels in the same purple. Checked on Araripe zoom (scratch T2).
 - (2026-11-11, user) Intake labels (zoom) no longer colored: all kinds (surface, transfer, minor) in dark ink #0b0b0b, bold 5.5 pt, white halo. Checked on Araripe zoom.
 - 2026-11-11: added plots/plot_municipio_check_sul{,_zoom}.local.json (Curitiba, Florianópolis, Porto Alegre; full and zoom), copies of the capitals configs with the same output folder. Not run.
+- 2026-11-11: added plots/plot_municipio_check_centro_oeste{,_zoom}.local.json (Campo Grande, Cuiabá, Goiânia, Brasília; full and zoom), same output folder as the capitals. Not run.
+- 2026-11-11: added plots/plot_municipio_check_nordeste{,_zoom}.local.json (9 Nordeste capitals; full and zoom), same output folder as the capitals. Not run.
+- (2026-11-12, user) Transfers file may also be TOML: read_transfer_pairs picks the format by extension (.json/.toml,
+  else stop; tomllib, stdlib, rejects repeated keys itself), same structure (top-level `source = [targets]`, then a
+  [catchments_only] table). Config transfers_intakes now has no default: the build looks for TRANSFERS-INTAKES.json or
+  .toml in T1, both present = stop. README updated. Tested in scratch: JSON and TOML give identical pairs; dup/syntax/
+  bad value/chain/unknown extension errors; default lookup (toml only; both = stop). No full build run.
+- (2026-11-12, user) Converted the real T1 TRANSFERS-INTAKES.json (had // comments: invalid JSON, the build would have
+  stopped) to TOML in the scratchpad, comments kept. Same content as the JSON without comments; passes
+  read_transfer_pairs against the real T1 intakes/catchments: 37 pairs (3 A, 34 C). User copies it to T1 and removes the JSON.
+- (2026-11-12, user) Plot aqueducts: the light background lines (every line in the full view, the non-relevant ones in
+  zoom mode) keep only the Operando family (Operando + Existente, via AQ_STATUS_FAMILY / status_family). New
+  aqueducts key "background_family" (default "Operando", null = all statuses); side legend "Aqueduct (operating)".
+  Zoom relevant systems unchanged (all statuses, colored). Checked on Rio full (16 of 20 lines) and zoom (3 of 5).
+- (2026-11-12, user) Transfer catchments greener (were too yellow): fill #c9d43a -> #a8cf4a, edge #7c8a14 -> #5f8a1a
+  (hue ~78°, between the old olive-yellow and the local #7cc47c). Checked on Rio zoom.
+- Recursive transfers (2026-11-12, user: chains needed, too many copies otherwise). catchments_transfers still one row
+  per declared pair / drawn polygon (no expanded rows). transfer_closure(tr, codes): rows whose target is in codes or is
+  the source of a row already reached (BFS; polygons end a chain), used by the dissolve (kinds from each row's own
+  transfer_type; each source once; A wins over C). Chain errors removed (A source as target, drawn target as A source);
+  transfer_cycles() stops the build. redundant_pairs(): declared pair already reached via a chain -> WARNING log line.
+  New report transfers_closure.csv (target, transfer_id, depth, ...). Plot: reads the whole layer and follows chains the
+  same way. Schema descriptions (catchments_transfers, n_intakes_transfer, n_transfer_areas), README, nomenclature
+  updated. Scratch (T1 symlinked, catchments copied): real TOML (37 pairs) -> 11 redundancy warnings; a chained TOML
+  without them (26 pairs) gives identical provisioning_areas; HEAD code on the same inputs gives an identical T2 (all
+  layers). Plot Rio zoom identical (2 transfer catchments, 1 transfer intake). Real T2 is stale vs T1 (9 CE munis differ,
+  older JSON / catchments). User: simplify the TOML (drop the warned pairs), then rebuild.
+- (2026-11-12, user, explicit request despite the frozen-scope rule) municipios_sedes gets municipio_name and
+  unidade_alias, copied from municipios at build (merge on municipio_code; a seat without municipality stops the
+  build). Schema: 2 columns (same descriptions as in municipios) + table description. Plot reads only
+  municipio_code from the seats (it merges the names from municipios; a second name column would collide).
+  Scratch build OK (5,570 seats, no NULLs); Rio zoom labels OK. User rebuilds T2.
+- (2026-11-12, user) plot_municipio_check: "author" key -> "Author: <text>" above the credits (6.5 pt, ink, wrapped at
+  42; credits stay 5.5 pt ink2). "font" presets: "default"/"fira" = Fira Sans, "helvetica" = TeX Gyre Heros (Helvetica
+  clone, GUST Font License) shipped in plots/fonts (4 .otf + GUST-FONT-LICENSE.txt, copied from the system tex-gyre);
+  any other value = installed family. All 18 plot_municipio_check*.json: font "helvetica", author "Iporã Possantti
+  (2026). IPH/UFRGS" (local) / "Name (year). Institution" (example). Rewritten with json.dumps: inline lists reflowed
+  (content same); git checkout of the 4 example files to undo the reflow was denied. Checked on Rio zoom.
+- (2026-11-12, user) Plot credits: author shown without the "Author:" prefix; new "version" key (default "1.0.0")
+  as the first credit line "Version: <v>". Local configs 2.0.0, examples 1.0.0 (keys inserted as text, no reflow).
+  Checked on Rio zoom.

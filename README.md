@@ -120,6 +120,19 @@ the file name). One key per source intake, with the list of the target intakes i
 ```
 
 Top-level entries are transfers between intakes: the source intake is relevant (case A, `transfer_type` `intake`).
+The same list can be written as `TRANSFERS-INTAKES.toml` instead (the format follows the extension; TOML allows
+comments). The top-level lines come first, then the `[catchments_only]` table. Keep only one of the two files: with
+both in the T1 folder the build stops, unless the config key `transfers_intakes` names one of them.
+
+```toml
+# source intake = [target intakes]
+IN08304511400594001 = ["IN08291861399164001", "IN08292001398220001"]
+IN08303171402724001 = ["IN08292001398220001"]
+
+[catchments_only]
+IN06898911352570001 = ["IN08291861399164001"]
+```
+
 Entries under `catchments_only` use only the source catchment, because the intake point itself plays no part, for
 example a catchment that feeds an open channel of a transfer aqueduct (case C, `transfer_type` `catchment`). Both kinds
 copy the catchment the same way; they differ in the counts and the maps: the source of case A counts in
@@ -142,11 +155,15 @@ that feeds two targets is drawn twice. At every build each polygon is reprojecte
 and measured (geodesic area, `n_parts`), then added to the layer with `source_intake_code` empty (`transfer_type` `polygon`, case B) and included
 in the provisioning areas of the target's municipalities, where `n_transfer_areas` counts them. Edit the file freely: it is read again at every build, with no
 fingerprints. The build stops on a missing layer, column or CRS, an unknown or groundwater target, a target without a
-catchment, a feature with no polygon, or a target that is also a case A source in the JSON.
+catchment or a feature with no polygon.
 
-Transfers are not followed in chains: a code that is both a case A source and a target stops the build. If C receives
-water from B, and B from A, write both sources for C. A `catchments_only` source may be a target elsewhere: only its
-own catchment is copied, nothing that reaches it. A drawn polygon's target must not be a case A source either. The build also stops on an unknown code, a groundwater intake, an intake
+Transfers are followed in chains (recursive). If C receives water from B, and B from A, declare A → B and B → C only:
+the municipalities of C get the catchments of B and A. A source that is itself a target, of any kind (top level,
+`catchments_only`, or the target of a drawn polygon), brings everything that reaches it along. The layer keeps one row per
+declared link, with no extra copies for the chains. A drawn polygon ends a chain, since it has no source intake. Each source counts once in a
+municipality, even when two paths reach it. A declared pair that a chain already covers is logged as a warning (the
+direct entry can be removed), and `transfers_closure.csv` lists, for each target intake, every row reached and its depth
+(1 = declared for that target). The build stops on a cycle (A → B → A), an unknown code, a groundwater intake, an intake
 without a catchment, a self-link, a pair listed twice (also once at the top and once in `catchments_only`) or a key repeated in one object. Without the file the layer is empty.
 The catchments themselves never change: a catchment is one outlet, one polygon.
 

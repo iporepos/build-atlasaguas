@@ -38,10 +38,10 @@ Config keys: gpkg, municipios (old name municipio_code still read), output_folde
   Optional: minor_direct (true: a linked intake reached only by a direct link (provisioning_links link_source direct)
   in a municipality with supply shares, none for its systems, e.g. Imunana -> Rio (Paquetá): gray point "Minor direct
   intake", its catchment ignored, its point in the frame, not used for the relevant aqueducts; T2 unchanged),
-  transfers (true: T2 layer catchments_transfers when present; rows whose target is a linked, not minor, intake, sources
+  transfers (true: T2 layer catchments_transfers when present; rows whose target is a linked, not minor, intake, chains followed upstream, sources
   linked to the municipality left out, a polygon reached through two targets drawn once: "Transfer catchment" yellower
   green, solid olive edge, under the catchments; their source intakes "Transfer intake" purple points, labelled in
-  zoom mode; both always in the legend, also with 0; catchments in the full frame, points in both frames), aqueducts (true or {"where", "color" (#d6198f magenta), "linewidth" (0.8), "full_view_alpha" (0.7: the light magenta of every line in the full view and of the non-relevant ones in zoom mode); relevant systems: every line whose aqueduct_name has a line intersecting the municipality or passing within "intake_km" (2) of a linked intake point ("relevant" true; catchments not used: trunk lines cross large catchments far from the intakes); their whole extent is added to the frame in both modes ("extend_frame" true; zoom mode: after the zoom_buffer, with the default margin when they reach out of it); zoom mode: only the relevant systems get "split_zoom" (true: color family by status, Operando magenta-purple, Em Obras reds, Planejado yellow-orange; Existente drawn with the Operando family, Em Projeto / Em Estudo / Em Licitação / Emergencial with Planejado ("status_family" overrides), each with its own subheader; any other status gray ("status_palettes", "other_palette"); one tone per aqueduct name, counted over the family; "linewidth_zoom" 1.2; listed in the lower right corner of the map, status as subheader, names under it, "legend_rows" 4, names wrapped at "wrap" 40)}: T2 layer aqueducts, all
+  zoom mode; both always in the legend, also with 0; catchments in the full frame, points in both frames), aqueducts (true or {"where", "color" (#d6198f magenta), "linewidth" (0.8), "full_view_alpha" (0.7: the light magenta of every line in the full view and of the non-relevant ones in zoom mode); "background_family" ("Operando": these light lines keep only the statuses of that family, i.e. Operando and Existente; null = every status; the side legend entry says "Aqueduct (operating)"); relevant systems: every line whose aqueduct_name has a line intersecting the municipality or passing within "intake_km" (2) of a linked intake point ("relevant" true; catchments not used: trunk lines cross large catchments far from the intakes); their whole extent is added to the frame in both modes ("extend_frame" true; zoom mode: after the zoom_buffer, with the default margin when they reach out of it); zoom mode: only the relevant systems get "split_zoom" (true: color family by status, Operando magenta-purple, Em Obras reds, Planejado yellow-orange; Existente drawn with the Operando family, Em Projeto / Em Estudo / Em Licitação / Emergencial with Planejado ("status_family" overrides), each with its own subheader; any other status gray ("status_palettes", "other_palette"); one tone per aqueduct name, counted over the family; "linewidth_zoom" 1.2; listed in the lower right corner of the map, status as subheader, names under it, "legend_rows" 4, names wrapped at "wrap" 40)}: T2 layer aqueducts, all
   statuses unless filtered), other_intakes (true: intakes in the frame not linked to the municipality, other_point_size
   10, colors surface_other / groundwater_other), ocean ({"path" (e.g. Natural Earth ne_10m_ocean.shp), "layer", "color" (#dce9f2, paler than the inland
   water bodies), "grow_km" (2: grown into land, hidden under the land layers, fills the gaps where the IBGE coast lies
@@ -66,8 +66,10 @@ Config keys: gpkg, municipios (old name municipio_code still read), output_folde
   UPLAND_SKM; without it whole classes of the smallest values are dropped, the largest class kept whole);
   column absent or not found -> single color and linewidth; "credit": panel text}), dpi (300), jpeg_quality (92), margin (0.04 of the
   frame), part_max_distance_km (50), title_size (11, shrinks to fit the panel), point_size (32), point_edge (0.9, white border), point_ring (0.5 pt dark ring outside the white border, 0 = off), other intakes in light opaque colors (surface_other, groundwater_other: no transparency, close wells do not stack), seat_size (9), max_labels (20: seat names shown, own first, then by urban population 2020; every seat keeps its diamond; unlabelled ones smaller, seat_unlabelled_scale 0.55 of the area, and lighter), colors ({background, background_edge, seat, seat_unlabelled, municipio, municipio_edge, catchment, catchment_edge, surface, groundwater,
-  drainage}), catchment_alpha (0.3), catchment_linewidth (0.7, edge #256b25), font ("Fira Sans": the .ttf files in
-  plots/fonts are registered at start; any installed family works; DejaVu Sans if not found).
+  drainage}), catchment_alpha (0.3), catchment_linewidth (0.7, edge #256b25), font ("default" = Fira Sans or "helvetica" =
+  TeX Gyre Heros, a Helvetica clone: both shipped in plots/fonts, registered at start, same result on every platform;
+  any installed family name also works; DejaVu Sans if not found), author (optional text, e.g. "Name (2026).
+  Institution": shown above the credits, a little larger than them), version ("1.0.0": "Version: <v>", first credit line).
 """
 import argparse
 import json
@@ -94,11 +96,15 @@ from matplotlib.patches import Patch  # noqa: E402
 from matplotlib.transforms import ScaledTranslation  # noqa: E402
 from matplotlib import font_manager  # noqa: E402
 
-FONT_DIR = Path(__file__).resolve().parent / "fonts"  # Fira Sans (SIL OFL, see fonts/OFL.txt), kept with the script
+FONT_DIR = Path(__file__).resolve().parent / "fonts"  # kept with the script, same look on every platform:
+# Fira Sans (SIL OFL, fonts/OFL.txt) and TeX Gyre Heros (Helvetica clone, GUST Font License, fonts/GUST-FONT-LICENSE.txt)
+FONT_PRESETS = {"default": "Fira Sans", "fira": "Fira Sans", "helvetica": "TeX Gyre Heros"}
 
 
 def set_font(family):
-    """Register the fonts shipped in plots/fonts and use `family` for all text (DejaVu Sans if it is not found)."""
+    """Register the fonts shipped in plots/fonts and use `family` for all text: a preset (FONT_PRESETS: "default" =
+    Fira Sans, "helvetica" = TeX Gyre Heros, both shipped) or any installed family name (DejaVu Sans if not found)."""
+    family = FONT_PRESETS.get(str(family).lower(), family)
     for f in sorted(FONT_DIR.glob("*.[ot]tf")):
         font_manager.fontManager.addfont(str(f))
     if family not in {f.name for f in font_manager.fontManager.ttflist}:
@@ -110,7 +116,7 @@ REQUIRED = ["gpkg", "output_folder"]
 COLORS = {"background": "#f1f0ec", "background_edge": "#c4c3be", "seat": "#3d3c39", "seat_unlabelled": "#9a9994",
           "municipio": "#d9d8d4", "municipio_edge": "#3d3c39", "catchment": "#7cc47c", "catchment_edge": "#256b25",
           "surface": "#0a58ca", "groundwater": "#f26b00", "drainage": "#3b78b0", "urban": "#814446", "water": "#b9dcf2", "water_edge": "#7fb3d5",
-          "surface_other": "#8fb0d6", "groundwater_other": "#e3ad84", "aqueduct": "#d6198f", "intake_ring": "#1d1d1b", "minor": "#9a9994", "transfer": "#c9d43a", "transfer_edge": "#7c8a14", "transfer_intake": "#7b3fa0",
+          "surface_other": "#8fb0d6", "groundwater_other": "#e3ad84", "aqueduct": "#d6198f", "intake_ring": "#1d1d1b", "minor": "#9a9994", "transfer": "#a8cf4a", "transfer_edge": "#5f8a1a", "transfer_intake": "#7b3fa0",
           "ocean": "#dce9f2", "country": "#e6e5e0", "country_edge": "#a9a8a3", "country_label": "#8f8e89","ink": "#0b0b0b", "ink2": "#52514e"}
 CM = 1 / 2.54
 # zoom mode aqueducts: the status is a hierarchy, each with its own color family (one tone per aqueduct name, cycled);
@@ -364,7 +370,7 @@ def side_panel(fig, gpkg, code, name, uf, proj_text, handles, col, cfg, view):
     for h, t in zip(handles, lg.get_texts()):
         if getattr(h, "subheader", False):  # e.g. "Intakes": its entries below it
             subheader(fig, t, ink, 7)
-    foot = [f"Data: ANA Atlas Águas 2021 (T2)", f"Intakes: provisioning_links of {code}"]
+    foot = [f"Version: {cfg.get('version', '1.0.0')}", f"Data: ANA Atlas Águas 2021 (T2)", f"Intakes: provisioning_links of {code}"]
     if cfg.get("drainage"):
         foot.append(cfg["drainage"].get("credit", "Drainage: HydroRIVERS v1.0"))
     if cfg.get("ocean"):
@@ -380,6 +386,11 @@ def side_panel(fig, gpkg, code, name, uf, proj_text, handles, col, cfg, view):
     for line in reversed(foot):
         cm_text(fig, x, yy, line, fontsize=5.5, color=ink2, va="bottom")
         yy += 0.3
+    if cfg.get("author"):  # above the credits, a little larger and darker
+        yy += 0.1
+        for line in reversed(textwrap.wrap(str(cfg["author"]), 42)):
+            cm_text(fig, x, yy, line, fontsize=6.5, color=ink, va="bottom")
+            yy += 0.35
 
 
 def plot_one(code, cfg, cpath, gpkg, out_dir, col):
@@ -407,12 +418,20 @@ def plot_one(code, cfg, cpath, gpkg, out_dir, col):
     log(f"{code} {name} ({uf}): {len(links)} linked intakes ({n_s} surface, {n_g} groundwater, {len(itk_minor)} minor direct), "
         f"{len(cat)} catchments" + (f"; minor direct (no share, catchment ignored): {', '.join(itk_minor.intake_code)}" if len(itk_minor) else ""))
     # transfers (T2 layer catchments_transfers, when the database has it): rows whose target (intake_code) is a linked,
-    # not minor, intake; sources already linked to the municipality are left out (their catchment is drawn already); a
+    # not minor, intake, chains followed upstream (a row also counts when its target is the source of a row already
+    # reached; same rule as build_database.transfer_closure); sources already linked to the municipality are left out (their catchment is drawn already); a
     # polygon reached through two targets is drawn once (by source intake; drawn polygons by identical geometry).
     # Transfer intakes = the source intakes of case A (catchments_only and drawn polygons have none)
     trc, itk_tr = cat.iloc[:0], itk.iloc[:0]
     if cfg.get("transfers", True) and "catchments_transfers" in set(pyogrio.list_layers(gpkg)[:, 0]):
-        tr = pyogrio.read_dataframe(gpkg, layer="catchments_transfers", where=f"intake_code IN ({sql_list(itk.intake_code) or 'NULL'})")
+        tr = pyogrio.read_dataframe(gpkg, layer="catchments_transfers")  # small layer: read whole, chains followed here
+        seen, front, keep = set(itk.intake_code), list(itk.intake_code), set()
+        while front:
+            hit = tr[tr.intake_code.isin(front) & ~tr.index.isin(keep)]
+            keep |= set(hit.index)
+            front = [c for c in hit.source_intake_code.dropna().unique() if c not in seen]
+            seen |= set(front)
+        tr = tr.loc[sorted(keep)]
         tr = tr[~tr.source_intake_code.isin(itk.intake_code)]
         key = pd.Series([v if isinstance(v, str) else shapely.normalize(g).wkb for v, g in zip(tr.source_intake_code, tr.geometry)], index=tr.index)
         trc = tr[~key.duplicated()]
@@ -513,7 +532,7 @@ def plot_one(code, cfg, cpath, gpkg, out_dir, col):
     frame = shapely.box(x0, y0, x1, y1)
     bbox_ll = tuple(gpd.GeoSeries([dense(frame)], crs=crs).to_crs(pyogrio.read_info(gpkg, layer="municipios")["crs"]).total_bounds)
     bg = pyogrio.read_dataframe(gpkg, layer="municipios", bbox=bbox_ll, columns=["municipio_code", "municipio_name"]).to_crs(crs)
-    seats = pyogrio.read_dataframe(gpkg, layer="municipios_sedes", bbox=bbox_ll).to_crs(crs)
+    seats = pyogrio.read_dataframe(gpkg, layer="municipios_sedes", bbox=bbox_ll, columns=["municipio_code"]).to_crs(crs)
     seats = seats.merge(bg[["municipio_code", "municipio_name"]], on="municipio_code", how="left")
     seats = seats[seats.intersects(frame)]
     # context from T2: the other intakes in the frame (not linked to this municipality) and the aqueducts
@@ -684,8 +703,15 @@ def plot_one(code, cfg, cpath, gpkg, out_dir, col):
     aq_color = aq_cfg.get("color", col["aqueduct"])
     aq_alpha = aq_cfg.get("full_view_alpha", 0.7)  # light magenta: every line in the full view, the non-relevant in zoom
     aq_groups = zoom_mode and aq is not None and aq.aqueduct_name.isin(rel_names).any() and aq_cfg.get("split_zoom", True)
+    # status -> color family (Existente is Operando, the stages before construction are Planejado)
+    fam = {**AQ_STATUS_FAMILY, **{s: s for s in aq_cfg.get("status_palettes", {})}, **aq_cfg.get("status_family", {})}
+    bg_family = aq_cfg.get("background_family", "Operando")
     if aq is not None and len(aq):  # above the drainage, below the seats
         plain = aq[~aq.aqueduct_name.isin(rel_names)] if aq_groups else aq
+        if bg_family:  # light background lines (full view; non-relevant in zoom mode): one status family only
+            n0 = len(plain)
+            plain = plain[plain.aqueduct_status.map(fam).eq(bg_family)]
+            log(f"  aqueducts in the background: {len(plain)} of {n0} lines ({bg_family} family)")
         draw(ax, plain, color=aq_color, alpha=aq_alpha, linewidth=aq_cfg.get("linewidth", 0.8), zorder=3.2)
     if aq_groups:
         aq = aq[aq.aqueduct_name.isin(rel_names)]  # relevant systems only: colored, listed on the map
@@ -698,7 +724,6 @@ def plot_one(code, cfg, cpath, gpkg, out_dir, col):
         lw, rows, wrap = aq_cfg.get("linewidth_zoom", 1.2), int(aq_cfg.get("legend_rows", 4)), aq_cfg.get("wrap", 40)
         st = aq.aqueduct_status.fillna("Unknown").astype(str)
         nm = aq.aqueduct_name.fillna("?").astype(str)
-        fam = {**AQ_STATUS_FAMILY, **{s: s for s in aq_cfg.get("status_palettes", {})}, **aq_cfg.get("status_family", {})}
         statuses = [s for s in fam if (st == s).any()] + sorted(set(st) - set(fam))
         blank = lambda: Line2D([], [], color="none", label="")  # noqa: E731
         aq_handles, heads, used = [], [], {}
@@ -799,7 +824,7 @@ def plot_one(code, cfg, cpath, gpkg, out_dir, col):
     if (ocean is not None and len(ocean)) or (marine is not None and len(marine)):
         handles.append(Patch(facecolor=oc_color, lw=0, label="Ocean"))
     if aq is not None:  # same entry in both modes (zoom mode: the relevant systems are also listed on the map)
-        handles.append(Line2D([], [], color=aq_color, alpha=aq_alpha, lw=1.0, label="Aqueduct"))
+        handles.append(Line2D([], [], color=aq_color, alpha=aq_alpha, lw=1.0, label="Aqueduct" + (" (operating)" if bg_family == "Operando" else f" ({bg_family})" if bg_family else "")))
     if drain is not None:
         handles.append(Line2D([], [], color=drain_color, lw=0.6, label="Drainage"))
     side_panel(fig, gpkg, code, name, uf, proj_text, handles, col, cfg, view)
@@ -851,7 +876,7 @@ def main():
     out_dir = cpath.parent / cfg["output_folder"]
     out_dir.mkdir(parents=True, exist_ok=True)
     col = {**COLORS, **cfg.get("colors", {})}
-    set_font(cfg.get("font", "Fira Sans"))
+    set_font(cfg.get("font", "default"))
     skip = a.skip_existing or cfg.get("skip_existing", False)
     log(f"{len(codes)} municipalities -> {out_dir}")
     done, skipped, failed = 0, 0, []

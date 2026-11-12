@@ -656,8 +656,8 @@
  {
   "name": "municipios_sedes",
   "kind": "spatial",
-  "description_pt": "Sedes municipais (pontos); atributos em municipios",
-  "description_en": "Municipality seats (points); attributes in municipios",
+  "description_pt": "Sedes municipais (pontos), com nome e UF copiados de municipios; demais atributos em municipios",
+  "description_en": "Municipality seats (points), with name and state copied from municipios; other attributes in municipios",
   "columns": [
    {
     "name": "municipio_code",
@@ -666,6 +666,22 @@
     "unit": "",
     "description_pt": "Código IBGE do município (7 dígitos)",
     "description_en": "IBGE municipality code (7 digits)"
+   },
+   {
+    "name": "municipio_name",
+    "type": "TEXT",
+    "not_null": true,
+    "unit": "",
+    "description_pt": "Nome do município",
+    "description_en": "Municipality name"
+   },
+   {
+    "name": "unidade_alias",
+    "type": "TEXT",
+    "not_null": true,
+    "unit": "",
+    "description_pt": "Sigla da unidade da federação",
+    "description_en": "State abbreviation"
    }
   ],
   "primary_key": [
@@ -944,8 +960,8 @@
  {
   "name": "catchments_transfers",
   "kind": "spatial",
-  "description_pt": "Bacias de transferência: áreas cuja água é transferida (adutora, canal) para o rio de uma captação (destino). Dois casos: a bacia de uma captação oficial de origem (cópia de catchments, refeita a cada construção; uma linha por par destino-origem) ou um polígono desenhado sem captação oficial na origem (source_intake_code vazio). Entram no dissolve da área de provisão dos municípios ligados à captação de destino. Não recursivo: só os pares declarados",
-  "description_en": "Transfer catchments: areas whose water is transferred (pipe, canal) into the river of an intake (target). Two cases: the catchment of an official source intake (copy from catchments, redone at every build; one row per target-source pair) or a drawn polygon without an official intake at the source (source_intake_code empty). Added to the provisioning-area dissolve of the municipalities linked to the target intake. Not recursive: only the declared pairs",
+  "description_pt": "Bacias de transferência: áreas cuja água é transferida (adutora, canal) para o rio de uma captação (destino). Dois casos: a bacia de uma captação oficial de origem (cópia de catchments, refeita a cada construção; uma linha por par destino-origem) ou um polígono desenhado sem captação oficial na origem (source_intake_code vazio). Entram no dissolve da área de provisão dos municípios ligados à captação de destino. Recursivo: uma origem que também é destino traz as suas próprias origens (cada ligação declarada uma vez; um município recebe toda linha cujo destino é uma das suas captações ou a origem de uma linha já alcançada; um polígono desenhado encerra a cadeia)",
+  "description_en": "Transfer catchments: areas whose water is transferred (pipe, canal) into the river of an intake (target). Two cases: the catchment of an official source intake (copy from catchments, redone at every build; one row per target-source pair) or a drawn polygon without an official intake at the source (source_intake_code empty). Added to the provisioning-area dissolve of the municipalities linked to the target intake. Recursive: a source that is also a target brings its own sources along (each link declared once; a municipality gets every row whose target is one of its intakes or the source of a row already reached; a drawn polygon ends the chain)",
   "columns": [
    {
     "name": "transfer_id",
@@ -1103,16 +1119,16 @@
     "type": "INTEGER",
     "not_null": true,
     "unit": "",
-    "description_pt": "Captações de origem de transferências do tipo intake (catchments_transfers) cuja bacia foi somada ao dissolve e que não estão ligadas ao município; 0 sem transferência. Não entram em n_intakes_surface, source_mix nem topology",
-    "description_en": "Source intakes of transfers of kind intake (catchments_transfers) whose catchment was added to the dissolve and that are not linked to the municipality; 0 without transfer. Not counted in n_intakes_surface, source_mix or topology"
+    "description_pt": "Captações de origem de transferências do tipo intake (catchments_transfers, cadeias seguidas; cada origem uma vez) cuja bacia foi somada ao dissolve e que não estão ligadas ao município; 0 sem transferência. Não entram em n_intakes_surface, source_mix nem topology",
+    "description_en": "Source intakes of transfers of kind intake (catchments_transfers, chains followed; each source once) whose catchment was added to the dissolve and that are not linked to the municipality; 0 without transfer. Not counted in n_intakes_surface, source_mix or topology"
    },
    {
     "name": "n_transfer_areas",
     "type": "INTEGER",
     "not_null": true,
     "unit": "",
-    "description_pt": "Áreas de transferência sem captação de origem relevante somadas ao dissolve: bacias do tipo catchment (não ligadas ao município) e polígonos desenhados (geometrias idênticas desenhadas para duas captações contam uma vez); 0 sem elas",
-    "description_en": "Transfer areas without a relevant source intake added to the dissolve: catchments of kind catchment (not linked to the municipality) and drawn polygons (identical geometries drawn for two targets count once); 0 without them"
+    "description_pt": "Áreas de transferência sem captação de origem relevante somadas ao dissolve (cadeias seguidas): bacias do tipo catchment (não ligadas ao município) e polígonos desenhados (geometrias idênticas desenhadas para duas captações contam uma vez); 0 sem elas",
+    "description_en": "Transfer areas without a relevant source intake added to the dissolve (chains followed): catchments of kind catchment (not linked to the municipality) and drawn polygons (identical geometries drawn for two targets count once); 0 without them"
    },
    {
     "name": "n_parts",

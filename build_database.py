@@ -9,13 +9,14 @@ Config keys: input_folder (T1 standard), output_gpkg, report_folder, catalog_lay
   within_min_part_km2, default 0.01),
   municipio_aliases (optional list of {name, unidade_alias, to}: old or renamed municipality names in the intake and
   system municipality lists, resolved to the DTB name `to` in the same state),
-  transfers_intakes (optional file name in input_folder, default TRANSFERS-INTAKES.json; build input only, not copied to T2),
+  transfers_intakes (optional file name in input_folder, .json or .toml, format by extension; default
+  TRANSFERS-INTAKES.json or TRANSFERS-INTAKES.toml, whichever exists, both = stop; build input only, not copied to T2),
   transfers_catchments (optional file name in input_folder, default TRANSFERS-CATCHMENTS.gpkg, layer transfers_catchments).
 
 T2 is NOT a copy of the T1 layout. It is a normalized schema (see build_database_schema.json, 16 tables: 8 plain + 8 spatial; 2 views):
   * naming: plural table names; `municipios` and `sedes` are the Portuguese exception; <entity>_<descriptor>;
   * spatial layers carry their own descriptive columns (no separate attribute tables, so QGIS needs no join):
-    municipios (incl. region, operator and metropolitan region as simple columns), municipios_sedes (key only),
+    municipios (incl. region, operator and metropolitan region as simple columns), municipios_sedes (key + name and state copied from municipios),
     intakes, aqueducts, catchments, catchments_transfers, provisioning_areas, provisioning_areas_within;
   * catchments_transfers, case A: the transfers JSON {source intake_code: [target intake_codes]} lists rivers fed by the
     river of another official intake through a pipe/canal (transfer_type intake). Case C, same JSON under the key
@@ -25,19 +26,21 @@ T2 is NOT a copy of the T1 layout. It is a normalized schema (see build_database
     from the source catchment at every build (a catchment revision reaches the copies). intake_code = the target
     (receives the water), source_intake_code = the source. Validation stops the
     build: not an object of non-empty code lists, duplicated key in one object, pair listed twice (also in A and C), self-link, unknown code, not
-    a surface intake, no catchment, chain (a case A source that is also a target: not recursive, list every source of
-    the last target; a case C source may be a target, only its own catchment is copied). Case B: drawn polygons where no official intake exists at the source (transfers_catchments GeoPackage, columns
+    a surface intake, no catchment, cycle. Chains are followed (recursive): a source that is itself a target brings its
+    own sources along, so each link is declared once (no extra rows; a declared pair already reached through a chain
+    is logged as a warning). Case B: drawn polygons where no official intake exists at the source (transfers_catchments GeoPackage, columns
     intake_code = target, optional note, any CRS): reprojected to the catchments CRS, cleaned like revise_catchments.py
     (make_valid, polygon parts, MultiPolygon), geodesic area, n_parts; source_intake_code NULL, transfer_type polygon; appended last in
     file order (one polygon feeding two targets = two features). Stops on: missing layer/column/CRS, feature without
-    intake_code, target not a surface intake with a catchment, no polygon left, target that is a case A source in the JSON. Not
+    intake_code, target not a surface intake with a catchment, no polygon left. A drawn polygon ends a chain. Not
     fingerprinted: re-read and re-cleaned at every build. No files -> empty layer. transfers_check.csv (information):
     per row the areas, overlap share of the smaller one with the target catchment (high = same river / drawn over the
-    target, probably not a transfer) and the municipalities of the target;
+    target, probably not a transfer) and the municipalities of the target; transfers_closure.csv: per target intake,
+    every row reached through the chains with its depth (1 = declared for it);
   * provisioning_areas (water-supply-nomenclature.md): one row per municipality, MultiPolygon dissolve of the catchments
     of the intakes linked by view provisioning_links = intakes_municipios (direct) UNION intakes_systems -> systems_supply
-    (covered_percent > 0); never by spatial intersection; plus the transfer areas whose target is one of these intakes
-    (source catchments of cases A and C and drawn polygons; a polygon drawn identically for two targets of the city counts once; n_intakes_transfer = the
+    (covered_percent > 0); never by spatial intersection; plus the transfer areas whose target is one of these intakes,
+    chains followed upstream (source catchments of cases A and C and drawn polygons; each source counted once; a polygon drawn identically for two targets of the city counts once; n_intakes_transfer = the
     source intakes not already linked (case A), n_transfer_areas = case C catchments + drawn polygons; n_intakes_surface, source_mix and
     topology describe the city's own intakes only; the area bounds check includes them). NULL geometry without surface intake (source_mix says why;
     n_intakes_system_only counts intakes reached only through an integrated system). Topology S / M-N / M-D /
@@ -84,6 +87,7 @@ import json
 import re
 import sqlite3
 import sys
+import tomllib
 import unicodedata
 from pathlib import Path
 
@@ -405,7 +409,11 @@ def build_tables(src, report, opts):
     geo["catchments"] = cat.reset_index(drop=True)
     log(f"  catchments: {len(cat)}, sources {cat.catchment_source.value_counts().to_dict()}, "
         f"multipart {int((num(cat.n_parts) > 1).sum())}")
-    geo["municipios_sedes"] = gpd.GeoDataFrame(seat_g[["municipio_code"]], geometry=seat_g.geometry.values, crs=seat_g.crs)
+    # seats: name and state copied from municipios (convenience for QGIS labels; the key is still municipio_code)
+    sn = seat_g[["municipio_code"]].merge(geo["municipios"][["municipio_code", "municipio_name", "unidade_alias"]], on="municipio_code", how="left")
+    if sn.municipio_name.isna().any():
+        sys.exit(f"municipios_sedes: seats without a municipality {sorted(sn.municipio_code[sn.municipio_name.isna()])}")
+    geo["municipios_sedes"] = gpd.GeoDataFrame(sn, geometry=seat_g.geometry.values, crs=seat_g.crs)
     return t, geo
 
 
@@ -413,10 +421,12 @@ TRANSFER_COLS = ["transfer_id", "intake_code", "source_intake_code", "transfer_t
 
 
 CATCHMENTS_ONLY = "catchments_only"
+TRANSFERS_INTAKES_DEFAULT = ["TRANSFERS-INTAKES.json", "TRANSFERS-INTAKES.toml"]
 
 
 def read_transfer_pairs(geo, path):
-    """Cases A and C: the transfers JSON {source intake_code: [target intake_codes], ..., "catchments_only": {source:
+    """Cases A and C: the transfers JSON or TOML (by extension; TOML: `source = [targets]` lines, then a
+    [catchments_only] table) {source intake_code: [target intake_codes], ..., "catchments_only": {source:
     [targets]}} -> sorted list of (source, target, transfer_type): "intake" (case A, top level: the source intake is a
     transfer intake) or "catchment" (case C, under catchments_only: only the source catchment counts, e.g. a catchment
     feeding an open channel of a transfer aqueduct; the intake point itself is not relevant)."""
@@ -426,10 +436,18 @@ def read_transfer_pairs(geo, path):
         if dup:
             sys.exit(f"transfers {path.name}: keys repeated in one object {dup}")
         return dict(pairs)
-    try:
-        d = json.loads(path.read_text(encoding="utf-8"), object_pairs_hook=no_dup_keys)
-    except json.JSONDecodeError as e:
-        sys.exit(f"transfers {path.name}: not valid JSON ({e})")
+    if path.suffix.lower() == ".toml":
+        try:  # tomllib already rejects repeated keys
+            d = tomllib.loads(path.read_text(encoding="utf-8"))
+        except tomllib.TOMLDecodeError as e:
+            sys.exit(f"transfers {path.name}: not valid TOML ({e})")
+    elif path.suffix.lower() == ".json":
+        try:
+            d = json.loads(path.read_text(encoding="utf-8"), object_pairs_hook=no_dup_keys)
+        except json.JSONDecodeError as e:
+            sys.exit(f"transfers {path.name}: not valid JSON ({e})")
+    else:
+        sys.exit(f"transfers {path.name}: unknown format (use .json or .toml)")
     shape = f'{{source intake_code: [target intake_codes], "{CATCHMENTS_ONLY}": {{source: [targets]}}}}'
     if not isinstance(d, dict):
         sys.exit(f"transfers {path.name}: must be an object {shape}")
@@ -451,15 +469,69 @@ def read_transfer_pairs(geo, path):
     self_ = sorted({s for s, t in st if s == t})
     if self_:
         errors.append(f"sources listed as their own target {self_}")
-    # chains: a target that is a case A source would need its own transfers followed (not done). A case C source may be
-    # a target elsewhere: only its own catchment is copied, nothing that reaches it
-    chain = sorted({s for s, t, k in pairs if s != t and k == "intake"} & {t for s, t in st if s != t})
-    if chain:
-        errors.append(f"codes both case A source and target (chains are not followed: list every source of the last target) {chain}")
+    # chains are followed (a source that is also a target brings its own sources along), so a cycle has no meaning
+    cyc = transfer_cycles([(s, t) for s, t in st if s != t])
+    if cyc:
+        errors.append(f"transfer cycles (water cannot flow back to where it came from) {cyc}")
     errors += surface_with_catchment(geo, sorted({c for p in st for c in p}))
     if errors:
         sys.exit(f"transfers {path.name}:\n  " + "\n  ".join(errors))
     return sorted(pairs, key=lambda p: (p[2] != "intake", p[0], p[1]))  # case A first, then C; each by (source, target)
+
+
+def transfer_cycles(edges):
+    """Cycles of the (source, target) graph, each as [a, b, ..., a]; [] if it is acyclic."""
+    up = {}
+    for s, t in edges:
+        up.setdefault(s, set()).add(t)
+    state, out = {}, []  # 1 = on the current path, 2 = done
+
+    def visit(n, path):
+        state[n] = 1
+        for m in sorted(up.get(n, ())):
+            if state.get(m) == 1:
+                out.append(path[path.index(m):] + [m])
+            elif m not in state:
+                visit(m, path + [m])
+        state[n] = 2
+    for n in sorted(up):
+        if n not in state:
+            visit(n, [n])
+    return out
+
+
+def transfer_closure(tr, codes):
+    """Rows of catchments_transfers that reach the intakes `codes`, following chains upstream: a row counts when its
+    target (intake_code) is one of `codes` or the source of a row already reached. Drawn polygons end a chain (no
+    source). Returns {transfer_id: depth}, depth 1 = the row feeds one of `codes` directly."""
+    by_target = {}
+    for i, tg, src in zip(tr.transfer_id, tr.intake_code, tr.source_intake_code):
+        by_target.setdefault(tg, []).append((int(i), src if isinstance(src, str) else None))
+    seen, out, front, depth = set(codes), {}, list(codes), 1
+    while front:
+        nxt = []
+        for c in front:
+            for i, src in by_target.get(c, ()):
+                if i not in out:
+                    out[i] = depth
+                    if src and src not in seen:
+                        seen.add(src)
+                        nxt.append(src)
+        front, depth = nxt, depth + 1
+    return out
+
+
+def redundant_pairs(tr):
+    """Declared pairs (source, target) whose source already reaches the target through a chain (the direct row is a
+    copy the chain makes unnecessary). Sorted list of (source, target)."""
+    rows = tr[tr.source_intake_code.notna()]
+    sid = dict(zip(rows.transfer_id.astype(int), rows.source_intake_code))
+    out = []
+    for i, s, t in zip(rows.transfer_id.astype(int), rows.source_intake_code, rows.intake_code):
+        other = tr[tr.transfer_id != i]
+        if any(sid.get(j) == s for j, d in transfer_closure(other, [t]).items() if d > 1):
+            out.append((s, t))
+    return sorted(set(out))
 
 
 def surface_with_catchment(geo, codes):
@@ -513,10 +585,15 @@ def build_transfers(geo, folder, json_name, areas_name, areas_layer="transfers_c
     """catchments_transfers. Cases A (transfer_type intake) and C (catchment, JSON catchments_only): one row per
     (target, source) pair of the transfers JSON, the geometry, area and n_parts copied from the source catchment (A then
     C, each ordered by (source, target)). Case B (polygon): one row per drawn polygon of the transfer-areas GeoPackage,
-    source_intake_code NULL (last, file order). Not recursive: a code that is both a source and a target (also a case B
-    target that is a case A/C source) stops the build. Missing files are skipped."""
+    source_intake_code NULL (last, file order). Chains are not expanded here (no extra rows): transfer_closure()
+    follows them when the provisioning areas are built; a cycle stops the build. Missing files are skipped."""
     cat = geo["catchments"]
     parts = []
+    if json_name is None:  # default: the JSON or the TOML, never both
+        found = [n for n in TRANSFERS_INTAKES_DEFAULT if (Path(folder) / n).exists()]
+        if len(found) > 1:
+            sys.exit(f"transfers: both {found} in {folder}; keep one (or set transfers_intakes in the config)")
+        json_name = (found or TRANSFERS_INTAKES_DEFAULT)[0]
     path = Path(folder) / json_name
     pairs = read_transfer_pairs(geo, path) if path.exists() else []
     if pairs:
@@ -533,9 +610,6 @@ def build_transfers(geo, folder, json_name, areas_name, areas_layer="transfers_c
     apath = Path(folder) / areas_name
     if apath.exists():
         ar = read_transfer_areas(geo, apath, areas_layer)
-        chain = sorted(set(ar.intake_code) & {p[0] for p in pairs if p[2] == "intake"})
-        if chain:
-            sys.exit(f"transfer areas {apath.name}: targets that are also case A sources in the transfers JSON (chains are not followed) {chain}")
         parts.append(ar)
         log(f"  transfers: {areas_name}: {len(ar)} drawn areas, {ar.intake_code.nunique()} targets, "
             f"{ar.catchment_area_km2.sum():,.1f} km2 in total")
@@ -547,6 +621,10 @@ def build_transfers(geo, folder, json_name, areas_name, areas_layer="transfers_c
         g = gpd.GeoDataFrame(g[TRANSFER_COLS], geometry=g.geometry.values, crs=cat.crs)
     else:
         g = gpd.GeoDataFrame({c: [] for c in TRANSFER_COLS}, geometry=gpd.GeoSeries([], crs=cat.crs), crs=cat.crs)
+    red = redundant_pairs(g)
+    if red:
+        log(f"  WARNING transfers: {len(red)} declared pairs (source, target) already reached through a chain, the direct "
+            f"entry can be removed: {red}")
     geo["catchments_transfers"] = g
     return g
 
@@ -673,14 +751,11 @@ def build_provisioning(t, geo, opts, report):
         n = len({find(c) for c in codes})
         return "M-N" if n == 1 else ("M-D" if n == len(codes) else "M-X")
 
-    # transfers: the source catchments of the transfers reaching a linked target are added to the dissolve (not recursive)
+    # transfers: the rows reaching a linked target, chains followed upstream (transfer_closure), are added to the dissolve
     tr = geo["catchments_transfers"]
-    ta = tr[tr.transfer_type == "intake"]  # case A: source intake and its catchment
-    tc = tr[tr.transfer_type == "catchment"]  # case C: the source catchment only
     tb = tr[tr.transfer_type == "polygon"]  # case B: drawn polygons
-    sources = ta.groupby("intake_code").source_intake_code.apply(set).to_dict()
-    csources = tc.groupby("intake_code").source_intake_code.apply(set).to_dict()
-    drawn = tb.groupby("intake_code").transfer_id.apply(list).to_dict()
+    kind = dict(zip(tr.transfer_id.astype(int), tr.transfer_type))
+    tsrc = dict(zip(tr.transfer_id.astype(int), tr.source_intake_code))
     tgeom = dict(zip(tb.transfer_id, shapely.make_valid(tb.geometry.values)))
     same = {}  # one polygon drawn for two targets = two features: identical geometries count once (first transfer_id)
     tkey = {i: same.setdefault(shapely.normalize(g).wkb, i) for i, g in tgeom.items()}
@@ -695,6 +770,11 @@ def build_provisioning(t, geo, opts, report):
          for i, k, s, tg in zip(tr.transfer_id, tr.transfer_type, tr.source_intake_code, tr.intake_code)],
         columns=["transfer_id", "transfer_type", "source_intake_code", "intake_code", "source_area_km2", "target_area_km2", "overlap_share_of_smaller",
                  "target_municipio_codes"])
+    # per target intake: every row reached through the chains (depth 1 = declared for it, 2+ = through another source)
+    report["transfers_closure.csv"] = pd.DataFrame(
+        [(tg, i, d, kind[i], "" if pd.isna(tsrc[i]) else tsrc[i], round(area[tsrc[i]] if pd.notna(tsrc[i]) else tarea[i], 3), mun_of.get(tg, ""))
+         for tg in sorted(set(tr.intake_code)) for i, d in sorted(transfer_closure(tr, [tg]).items(), key=lambda x: (x[1], x[0]))],
+        columns=["intake_code", "transfer_id", "depth", "transfer_type", "source_intake_code", "source_area_km2", "target_municipio_codes"])
 
     counts = link.groupby(["municipio_code", "intake_type"]).size().unstack(fill_value=0)
     sys_only = link[link.link_source == "system"].groupby("municipio_code").size()
@@ -709,9 +789,10 @@ def build_provisioning(t, geo, opts, report):
         extra, extra_c, ids = [], [], []  # source intakes (A), source catchments only (C), drawn polygons (B)
         if ns:
             codes = sorted(surf.intake_code[surf.municipio_code == mu])
-            extra = sorted(set().union(*(sources.get(c, set()) for c in codes)) - set(codes))
-            extra_c = sorted(set().union(*(csources.get(c, set()) for c in codes)) - set(codes) - set(extra))
-            ids = sorted({tkey[i] for c in codes for i in drawn.get(c, [])})  # a polygon shared by two targets counts once
+            reach = transfer_closure(tr, codes)  # chains followed
+            extra = sorted({tsrc[i] for i in reach if kind[i] == "intake"} - set(codes))
+            extra_c = sorted({tsrc[i] for i in reach if kind[i] == "catchment"} - set(codes) - set(extra))
+            ids = sorted({tkey[i] for i in reach if kind[i] == "polygon"})  # a polygon shared by two targets counts once
             g = multi(polygon_parts(shapely.union_all([geom[c] for c in codes + extra + extra_c] + [tgeom[i] for i in ids])))
             topo = topology(codes)  # the city's own intakes only
             members += [(mu, area[c]) for c in codes + extra + extra_c] + [(mu, tarea[i]) for i in ids]
@@ -873,7 +954,7 @@ def main():
     report = {}
     log("reading T1 and transforming")
     tables, geo = build_tables(src, report, cfg)
-    build_transfers(geo, src.folder, cfg.get("transfers_intakes", "TRANSFERS-INTAKES.json"), cfg.get("transfers_catchments", "TRANSFERS-CATCHMENTS.gpkg"))
+    build_transfers(geo, src.folder, cfg.get("transfers_intakes"), cfg.get("transfers_catchments", "TRANSFERS-CATCHMENTS.gpkg"))
     build_provisioning(tables, geo, cfg.get("provisioning", {}), report)
 
     part = out.with_name(out.stem + ".part.gpkg")
