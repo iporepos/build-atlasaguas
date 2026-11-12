@@ -1,0 +1,13 @@
+{
+ "folder": "/path/to/folder/municipio_checks/phase1_capitals",
+ "municipios": "lists/capitals.txt",
+ "views": [
+  "full",
+  "zoom"
+ ],
+ "gpkg": "/path/to/folder/ANA_ATLASAGUAS_DB_BRAZIL_2021.gpkg",
+ "output": "/path/to/folder/ANA_ATLASAGUAS_MAPS_CAPITALS_BRAZIL_2021.pdf",
+ "title": "Atlas Águas 2021, harmonized and enhanced: provisioning areas of the state capitals (full and zoom views)",
+ "author": "Name",
+ "subject": "One page per map: full view, then zoom view, for each of the 27 state capitals (IBGE code order)"
+}

@@ -8,7 +8,7 @@ Runs the SQL file against the T2 GeoPackage (read-only) and plots the result.
   --show    interactive window: hover a dot to see system, municipalities, population, area and density
   (default) saves a JPEG to config `output` (or --output) and does not open a window
 Config keys: gpkg, sql (relative to the config file), output, x, y, category, category_order, x_label, y_label,
-  title, panel_color (plot area gray), log_x, log_y, label_top (how many extreme systems are named per measure), label_column (default municipios_name), dpi, size_inches, jpeg_quality.
+  title (one line; the font, title_size, default 12, shrinks to fit the width), panel_color (plot area gray), log_x, log_y, label_top (how many extreme systems are named per measure), label_column (default municipios_name), dpi, size_inches, jpeg_quality.
   Optional: subtitle (may use {n} plotted and {dropped}), ratio_column (third measure for labels, default
   covered_population_per_km2), hover (list of [column, text, format], e.g. ["n_parts", "parts", "{:.0f}"]),
   marker_size (default 44), marker_edge (default 1.2), alpha (default 0.95), colors (categorical hex list in category_order,
@@ -20,7 +20,13 @@ Config keys: gpkg, sql (relative to the config file), output, x, y, category, ca
   highlight ({"column": c, "value": v, "label": "...", "other_label": "...", "alpha": a, "scale": k}: replaces category
   with two groups, other rows first in colors[0], rows where c == v on top in colors[1] (alpha a, default the config
   alpha; dot diameter x k, default 1);
-  direct labels name highlighted rows only).
+  direct labels name highlighted rows only). Also: "values" instead of "value" (a list, or a text file relative to the
+  config with one value per line, first token, '#' comments skipped, e.g. lists/capitals.txt with column
+  municipio_code); "label_all": true names every highlighted row (default: the label_top extremes); "each": true draws
+  one plot per value (the "values" list, or every distinct value of the column), with "{value}" and "{label}" replaced
+  in title, subtitle and output ("value_labels": {value: label}, e.g. state names; default the value itself).
+  font ("default" = Fira Sans, "helvetica" = TeX Gyre Heros, both shipped in plots/fonts; any installed family; default
+  DejaVu Sans as before).
 Rows with a missing or non-positive x/y are dropped on log axes (counted in the log).
 """
 import argparse
@@ -36,6 +42,7 @@ import numpy as np
 import pandas as pd
 
 REQUIRED = ["gpkg", "sql", "x", "y"]
+FONT = "DejaVu Sans"  # set by the config "font" in main()
 # reference palette, light surface; categorical slots in fixed order (blue, orange)
 SURFACE, INK, INK2, MUTED, GRID = "#fcfcfb", "#0b0b0b", "#52514e", "#8a8984", "#d8d7d2"
 REF = "#aaa9a4"  # reference lines (y = f * x), a step lighter than MUTED
@@ -83,6 +90,14 @@ def fmt_num(v, _=None):
     return f"{v:g}"
 
 
+def read_values(spec, base):
+    """A list as is, or a text file (relative to base): first token of each line, blank lines and '#' comments skipped."""
+    if isinstance(spec, list):
+        return [str(v) for v in spec]
+    lines = (Path(base) / spec).read_text(encoding="utf-8").splitlines()
+    return [ln.split()[0] for ln in lines if ln.strip() and not ln.lstrip().startswith("#")]
+
+
 def draw(df, cfg, interactive):
     import matplotlib.pyplot as plt
     from matplotlib.ticker import FuncFormatter
@@ -104,12 +119,13 @@ def draw(df, cfg, interactive):
     d = d[ok].reset_index(drop=True)
     ratio = cfg.get("ratio_column", "covered_population_per_km2")
     if hl:
-        on, other = hl.get("label", str(hl["value"])), hl.get("other_label", "Others")
+        on, other = hl.get("label", str(hl.get("value", "Highlighted"))), hl.get("other_label", "Others")
         cat = "_highlight"
-        d[cat] = np.where(d[hl["column"]] == hl["value"], on, other)
+        vals = set(read_values(hl["values"], cfg.get("_dir", ".")) if "values" in hl else [str(hl["value"])])
+        d[cat] = np.where(d[hl["column"]].astype(str).isin(vals), on, other)
         cfg = {**cfg, "category_order": [other, on]}
 
-    plt.rcParams.update({"font.family": "DejaVu Sans", "text.color": INK, "axes.labelcolor": INK2, "xtick.color": INK2, "ytick.color": INK2})
+    plt.rcParams.update({"font.family": FONT, "text.color": INK, "axes.labelcolor": INK2, "xtick.color": INK2, "ytick.color": INK2})
     fig, ax = plt.subplots(figsize=cfg.get("size_inches", [10, 6.5]), facecolor=SURFACE)
     panel = cfg.get("panel_color", PANEL)
     ax.set_facecolor(panel)
@@ -164,10 +180,18 @@ def draw(df, cfg, interactive):
     fw = float(cfg.get("size_inches", [10, 6.5])[0])
     sub_text = cfg.get("subtitle", "One dot per supply system. Catchment areas of a system's intakes are summed (no overlap correction).")
     sub = textwrap.fill(sub_text.format(n=len(d), dropped=int((~ok).sum())), width=max(30, int(fw * 13)))
-    title = textwrap.fill(cfg.get("title", ""), width=max(24, int(fw * 8.5)))
+    title = cfg.get("title", "")  # one line: the font shrinks to fit the figure width (fit_title)
     nsub = sub.count("\n") + 1
     ax.text(0, 1.015, sub, transform=ax.transAxes, fontsize=8.5, color=INK2, va="bottom", linespacing=1.25)
-    ax.set_title(title, loc="left", fontsize=12 if fw < 9 else 13, fontweight="bold", color=INK, pad=14 + 12 * nsub)
+    tt = ax.set_title(title, loc="left", fontsize=float(cfg.get("title_size", 12 if fw < 9 else 13)), fontweight="bold",
+                      color=INK, pad=14 + 12 * nsub)
+
+    def fit_title(min_size=8.0):
+        """Shrink the title font (0.25 pt steps, down to min_size) until it ends inside the figure."""
+        rend_ = fig.canvas.get_renderer()
+        while tt.get_fontsize() > min_size and tt.get_window_extent(rend_).x1 > fig.bbox.width * 0.98:
+            tt.set_fontsize(tt.get_fontsize() - 0.25)
+    fit_title()  # before the layout, so tight_layout does not squeeze the axes for an overflowing title
     if groups:
         leg = ax.legend(loc=cfg.get("legend_loc", "lower right"), frameon=False, fontsize=9, labelcolor=INK2, handletextpad=0.4)
         for h in leg.legend_handles:
@@ -177,7 +201,9 @@ def draw(df, cfg, interactive):
     n = int(cfg.get("label_top", 3))
     pick = []
     cand = d[d[cat] == on] if hl else d
-    for col in (y, x) + ((ratio,) if ratio in d.columns else ()):
+    if hl and hl.get("label_all"):
+        pick = list(cand[y].sort_values(ascending=False).index)  # every highlighted row, largest y first
+    for col in (y, x) + ((ratio,) if ratio in d.columns else ()) if not (hl and hl.get("label_all")) else ():
         pick += list(cand[col].nlargest(n).index)
     seen = set()
     lab_col = cfg.get("label_column", "municipios_name")
@@ -190,6 +216,7 @@ def draw(df, cfg, interactive):
     dup = pd.Series(list(base.values())).duplicated(keep=False).to_numpy()
     dups = {l for l, f in zip(base.values(), dup) if f}  # same municipality for several labelled systems: add the system name
     fig.tight_layout()
+    fit_title()  # the layout may move the axes: check again
     fig.canvas.draw()
     rend = fig.canvas.get_renderer()
     placed = []
@@ -292,13 +319,40 @@ def main():
         sys.exit(f"config: missing keys {miss}")
     if not a.show:
         matplotlib.use("Agg")
+    global FONT
+    if cfg.get("font"):
+        from plot_fonts import set_font  # same presets and shipped fonts as the maps
+        FONT = set_font(cfg["font"], log)
+    cfg["_dir"] = str(cfg_path.parent)
     df = load(cfg, cfg_path.parent)
-    fig = draw(df, cfg, a.show)
     import matplotlib.pyplot as plt
+    hl = cfg.get("highlight") or {}
+    if hl.get("each"):  # one plot per value
+        if a.show:
+            sys.exit("--show draws one plot: remove highlight.each or pick one value")
+        if "{value}" not in cfg.get("output", "") and not a.output:
+            sys.exit('highlight.each: the output needs "{value}" (one file per value)')
+        vals = read_values(hl["values"], cfg_path.parent) if "values" in hl else sorted(df[hl["column"]].dropna().astype(str).unique())
+        names = hl.get("value_labels", {})
+        for v in vals:
+            lab = names.get(v, v)
+            sub = lambda t: t.replace("{value}", v).replace("{label}", lab) if isinstance(t, str) else t  # noqa: E731
+            c = {**cfg, "title": sub(cfg.get("title", "")), "highlight": {**hl, "each": False, "values": [v], "label": sub(hl.get("label", "{label}"))}}
+            if "subtitle" in cfg:
+                c["subtitle"] = sub(cfg["subtitle"])
+            out = Path(sub(a.output or cfg["output"]))
+            log(f"-- {v} ({lab})")
+            save(draw(df, c, False), out, cfg)
+            plt.close("all")
+        return
+    fig = draw(df, cfg, a.show)
     if a.show:
         plt.show()
         return
-    out = Path(a.output or cfg.get("output", "system_dispersion.jpg"))
+    save(fig, Path(a.output or cfg.get("output", "system_dispersion.jpg")), cfg)
+
+
+def save(fig, out, cfg):
     out.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out, dpi=cfg.get("dpi", 200), facecolor=SURFACE, pil_kwargs={"quality": cfg.get("jpeg_quality", 92)})
     log(f"saved {out}")

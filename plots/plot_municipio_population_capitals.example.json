@@ -1,0 +1,107 @@
+{
+ "gpkg": "/path/to/folder/ANA_ATLASAGUAS_DB_BRAZIL_2021.gpkg",
+ "sql": "../queries/municipio_population_provisioning.sql",
+ "output": "/path/to/folder/dispersion_2020/municipio_population_dispersion_2020_capitals.jpg",
+ "x": "population_urban_2020",
+ "y": "provisioning_area_km2",
+ "colors": [
+  "#aeada8",
+  "#1c2f6e"
+ ],
+ "legend_loc": "upper left",
+ "x_label": "Urban population, 2020 (inhabitants)",
+ "y_label": "Provisioning area (km²)",
+ "title": "Provisioning area vs urban population: state capitals",
+ "subtitle": "One dot per municipality with a provisioning area ({n}); the state capitals in blue (Natal has none: groundwater only), other municipalities in gray. Population = all urban inhabitants (any source, covered or not). {dropped} left out: urban population not reported.",
+ "ratio_column": "population_urban_per_km2",
+ "label_column": "municipio_name",
+ "hover": [
+  [
+   "unidade_alias",
+   "state",
+   "{}"
+  ],
+  [
+   "population_urban_2020",
+   "urban population 2020",
+   "{:,.0f}"
+  ],
+  [
+   "provisioning_area_km2",
+   "provisioning area (km²)",
+   "{:,.1f}"
+  ],
+  [
+   "population_urban_per_km2",
+   "density (/km²)",
+   "{:,.2f}"
+  ],
+  [
+   "surface_percent",
+   "surface share (%)",
+   "{:.1f}"
+  ],
+  [
+   "supply_coverage_2020",
+   "supply coverage (%)",
+   "{:.1f}"
+  ],
+  [
+   "n_intakes_surface",
+   "surface intakes",
+   "{:.0f}"
+  ],
+  [
+   "n_parts",
+   "parts",
+   "{:.0f}"
+  ],
+  [
+   "topology",
+   "topology",
+   "{}"
+  ]
+ ],
+ "log_x": true,
+ "log_y": true,
+ "label_top": 3,
+ "dpi": 200,
+ "size_inches": [
+  6.5,
+  6.5
+ ],
+ "jpeg_quality": 92,
+ "panel_color": "#e4e3df",
+ "marker_size": 12,
+ "marker_edge": 0.3,
+ "alpha": 1.0,
+ "equal_axes": true,
+ "identity_line": [
+  {
+   "label": "1 km² per inhabitant"
+  },
+  {
+   "label": "1 ha per inhabitant",
+   "factor": 0.01
+  },
+  {
+   "label": "100 m² per inhabitant",
+   "factor": 0.0001
+  },
+  {
+   "label": "1 m² per inhabitant",
+   "factor": 1e-06
+  }
+ ],
+ "highlight": {
+  "column": "municipio_code",
+  "values": "lists/capitals.txt",
+  "label": "State capitals",
+  "other_label": "Other municipalities",
+  "alpha": 0.9,
+  "scale": 1.2,
+  "label_all": true
+ },
+ "label_gap": 4,
+ "font": "helvetica"
+}

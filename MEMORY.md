@@ -496,3 +496,20 @@ History before this repo: `Bench/MEMORY.md`, entries 2026-10-05, 2026-10-21 and 
 - (2026-11-12, user) Plot credits: author shown without the "Author:" prefix; new "version" key (default "1.0.0")
   as the first credit line "Version: <v>". Local configs 2.0.0, examples 1.0.0 (keys inserted as text, no reflow).
   Checked on Rio zoom.
+- (2026-11-12) Zenodo 2.0.0 prep: version log "[version to confirm]" -> 2.0.0 (same number as the plot configs; examples
+  of transfers, chains, T1 transfer files), provisioning bullet mentions chains. publish.py --dry-run stops: T2 has a
+  -wal (QGIS open / unclean close). Synthesis CSV in T2/REPORT dated 10-27 (stale: rerun synthesis_municipios.py).
+  Old 1.1.0 zips in SRC/ZENODO (need --overwrite or move). User runs the steps.
+- (2026-11-12, user) Zenodo extras: plots/maps_to_pdf.py (own minimal PDF writer, JPEG embedded as is, page = image
+  size at its dpi, bookmarks; folder mode for the maps with municipios order + gpkg names, files mode for any JPEGs).
+  plots/plot_fonts.py: shared FONT_PRESETS/set_font (plot_municipio_check imports it; dispersion too, without forcing
+  Agg). plot_system_dispersion.py: highlight "values" (list or text file), "label_all", "each" (one plot per value,
+  {value}/{label} in title/subtitle/output, value_labels), "font". New configs: plot_municipio_population_{states,
+  capitals}.{local,example}.json (output REPORT/dispersion_2020/), maps_to_pdf_capitals.*, dispersion_to_pdf.* (29
+  pages: Brazil, capitals, 27 states by name). Population (Brazil) config got font helvetica. Natal: no provisioning
+  area (groundwater) -> 26 capitals in the scatter (subtitle says so). Tested in scratch: Rio + Campina maps PDF,
+  Brazil/capitals/PB/RS dispersion + PDF. Zenodo html: 2 PDFs in Files + version log. User runs the full batches.
+- (2026-11-12, user) dispersion_to_pdf.{local,example}.json: state pages in IBGE state code order (RO 11 ... DF 53),
+  after Brazil and capitals; subject says so.
+- (2026-11-12, user) Dispersion title: one line (no char-count wrap), font title_size (default 12/13) shrinks in
+  0.25 pt steps (min 8) until it ends inside the figure; checked before and after tight_layout. RN, PB, Brazil OK.

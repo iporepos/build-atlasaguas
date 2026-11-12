@@ -1,4 +1,5 @@
 {
+ "font": "helvetica",
  "gpkg": "/path/to/folder/ANA_ATLASAGUAS_DB_BRAZIL_2021.gpkg",
  "sql": "../queries/municipio_population_provisioning.sql",
  "output": "/path/to/folder/municipio_population_dispersion.jpg",

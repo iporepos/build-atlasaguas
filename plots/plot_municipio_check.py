@@ -94,23 +94,13 @@ from matplotlib.lines import Line2D  # noqa: E402
 from matplotlib import patheffects  # noqa: E402
 from matplotlib.patches import Patch  # noqa: E402
 from matplotlib.transforms import ScaledTranslation  # noqa: E402
-from matplotlib import font_manager  # noqa: E402
 
-FONT_DIR = Path(__file__).resolve().parent / "fonts"  # kept with the script, same look on every platform:
-# Fira Sans (SIL OFL, fonts/OFL.txt) and TeX Gyre Heros (Helvetica clone, GUST Font License, fonts/GUST-FONT-LICENSE.txt)
-FONT_PRESETS = {"default": "Fira Sans", "fira": "Fira Sans", "helvetica": "TeX Gyre Heros"}
+from plot_fonts import FONT_PRESETS  # noqa: E402,F401  (plots/plot_fonts.py: shipped fonts and presets)
+from plot_fonts import set_font as _set_font  # noqa: E402
 
 
 def set_font(family):
-    """Register the fonts shipped in plots/fonts and use `family` for all text: a preset (FONT_PRESETS: "default" =
-    Fira Sans, "helvetica" = TeX Gyre Heros, both shipped) or any installed family name (DejaVu Sans if not found)."""
-    family = FONT_PRESETS.get(str(family).lower(), family)
-    for f in sorted(FONT_DIR.glob("*.[ot]tf")):
-        font_manager.fontManager.addfont(str(f))
-    if family not in {f.name for f in font_manager.fontManager.ttflist}:
-        log(f"font {family!r} not found (plots/fonts or system), DejaVu Sans used")
-        return
-    plt.rcParams["font.family"] = family
+    _set_font(family, log)
 
 REQUIRED = ["gpkg", "output_folder"]
 COLORS = {"background": "#f1f0ec", "background_edge": "#c4c3be", "seat": "#3d3c39", "seat_unlabelled": "#9a9994",

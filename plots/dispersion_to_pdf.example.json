@@ -1,0 +1,124 @@
+{
+ "files": [
+  {
+   "path": "/path/to/folder/municipio_population_dispersion_2020.jpg",
+   "title": "Brazil, by region"
+  },
+  {
+   "path": "/path/to/folder/dispersion_2020/municipio_population_dispersion_2020_capitals.jpg",
+   "title": "State capitals"
+  },
+  {
+   "path": "/path/to/folder/dispersion_2020/municipio_population_dispersion_2020_RO.jpg",
+   "title": "Rondônia (RO)"
+  },
+  {
+   "path": "/path/to/folder/dispersion_2020/municipio_population_dispersion_2020_AC.jpg",
+   "title": "Acre (AC)"
+  },
+  {
+   "path": "/path/to/folder/dispersion_2020/municipio_population_dispersion_2020_AM.jpg",
+   "title": "Amazonas (AM)"
+  },
+  {
+   "path": "/path/to/folder/dispersion_2020/municipio_population_dispersion_2020_RR.jpg",
+   "title": "Roraima (RR)"
+  },
+  {
+   "path": "/path/to/folder/dispersion_2020/municipio_population_dispersion_2020_PA.jpg",
+   "title": "Pará (PA)"
+  },
+  {
+   "path": "/path/to/folder/dispersion_2020/municipio_population_dispersion_2020_AP.jpg",
+   "title": "Amapá (AP)"
+  },
+  {
+   "path": "/path/to/folder/dispersion_2020/municipio_population_dispersion_2020_TO.jpg",
+   "title": "Tocantins (TO)"
+  },
+  {
+   "path": "/path/to/folder/dispersion_2020/municipio_population_dispersion_2020_MA.jpg",
+   "title": "Maranhão (MA)"
+  },
+  {
+   "path": "/path/to/folder/dispersion_2020/municipio_population_dispersion_2020_PI.jpg",
+   "title": "Piauí (PI)"
+  },
+  {
+   "path": "/path/to/folder/dispersion_2020/municipio_population_dispersion_2020_CE.jpg",
+   "title": "Ceará (CE)"
+  },
+  {
+   "path": "/path/to/folder/dispersion_2020/municipio_population_dispersion_2020_RN.jpg",
+   "title": "Rio Grande do Norte (RN)"
+  },
+  {
+   "path": "/path/to/folder/dispersion_2020/municipio_population_dispersion_2020_PB.jpg",
+   "title": "Paraíba (PB)"
+  },
+  {
+   "path": "/path/to/folder/dispersion_2020/municipio_population_dispersion_2020_PE.jpg",
+   "title": "Pernambuco (PE)"
+  },
+  {
+   "path": "/path/to/folder/dispersion_2020/municipio_population_dispersion_2020_AL.jpg",
+   "title": "Alagoas (AL)"
+  },
+  {
+   "path": "/path/to/folder/dispersion_2020/municipio_population_dispersion_2020_SE.jpg",
+   "title": "Sergipe (SE)"
+  },
+  {
+   "path": "/path/to/folder/dispersion_2020/municipio_population_dispersion_2020_BA.jpg",
+   "title": "Bahia (BA)"
+  },
+  {
+   "path": "/path/to/folder/dispersion_2020/municipio_population_dispersion_2020_MG.jpg",
+   "title": "Minas Gerais (MG)"
+  },
+  {
+   "path": "/path/to/folder/dispersion_2020/municipio_population_dispersion_2020_ES.jpg",
+   "title": "Espírito Santo (ES)"
+  },
+  {
+   "path": "/path/to/folder/dispersion_2020/municipio_population_dispersion_2020_RJ.jpg",
+   "title": "Rio de Janeiro (RJ)"
+  },
+  {
+   "path": "/path/to/folder/dispersion_2020/municipio_population_dispersion_2020_SP.jpg",
+   "title": "São Paulo (SP)"
+  },
+  {
+   "path": "/path/to/folder/dispersion_2020/municipio_population_dispersion_2020_PR.jpg",
+   "title": "Paraná (PR)"
+  },
+  {
+   "path": "/path/to/folder/dispersion_2020/municipio_population_dispersion_2020_SC.jpg",
+   "title": "Santa Catarina (SC)"
+  },
+  {
+   "path": "/path/to/folder/dispersion_2020/municipio_population_dispersion_2020_RS.jpg",
+   "title": "Rio Grande do Sul (RS)"
+  },
+  {
+   "path": "/path/to/folder/dispersion_2020/municipio_population_dispersion_2020_MS.jpg",
+   "title": "Mato Grosso do Sul (MS)"
+  },
+  {
+   "path": "/path/to/folder/dispersion_2020/municipio_population_dispersion_2020_MT.jpg",
+   "title": "Mato Grosso (MT)"
+  },
+  {
+   "path": "/path/to/folder/dispersion_2020/municipio_population_dispersion_2020_GO.jpg",
+   "title": "Goiás (GO)"
+  },
+  {
+   "path": "/path/to/folder/dispersion_2020/municipio_population_dispersion_2020_DF.jpg",
+   "title": "Distrito Federal (DF)"
+  }
+ ],
+ "output": "/path/to/folder/ANA_ATLASAGUAS_DISPERSION_BRAZIL_2021.pdf",
+ "title": "Atlas Águas 2021, harmonized and enhanced: provisioning area vs urban population (2020)",
+ "author": "Name",
+ "subject": "Brazil by region, the state capitals, then one page per state (IBGE state code order)"
+}
